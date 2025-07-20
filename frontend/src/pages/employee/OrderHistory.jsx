@@ -22,9 +22,8 @@ const OrderHistory = () => {
 
     useEffect(() => {
         fetchOrders();
-        // Poll every 5 seconds for real-time updates
-        fetchOrders();
-        const interval = setInterval(fetchOrders, 5000);
+        const interval = setInterval(fetchOrders, 30000); // Fetch every 30 seconds
+
         return () => clearInterval(interval);
     }, []);
 
@@ -38,7 +37,6 @@ const OrderHistory = () => {
             setLoading(false);
         }
     };
-
 
     const filterOrders = () => {
         let filtered = [...orders];

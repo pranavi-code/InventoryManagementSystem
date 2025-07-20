@@ -22,6 +22,9 @@ const EmployeeHome = () => {
 
     useEffect(() => {
         fetchDashboardData();
+        const interval = setInterval(fetchDashboardData, 30000); // Fetch every 30 seconds
+
+        return () => clearInterval(interval);
     }, []);
 
     const fetchDashboardData = async () => {

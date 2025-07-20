@@ -1,0 +1,16 @@
+[{
+  "_id": {
+    "$oid": "6872415af6e50253119a31c6"
+  },
+  "categoryName": "toys",
+  "categoryDescription": "kids",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "687c9073c7c3bdf6a224c10b"
+  },
+  "categoryName": "electronics",
+  "categoryDescription": "costly",
+  "__v": 0
+}]

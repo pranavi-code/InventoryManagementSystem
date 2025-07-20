@@ -1,5 +1,5 @@
 import './App.css'
-import {BrowserRouter as Router, Route, Routes} from 'react-router';
+import { BrowserRouter as Router, Route, Routes } from 'react-router';
 import Root from './utils/Root.jsx';
 import Login from './pages/Login.jsx';
 import ProtectedRoutes from './utils/ProtectedRoutes.jsx';
@@ -21,6 +21,7 @@ import MyOrders from './pages/employee/MyOrders.jsx';
 import OrderHistory from './pages/employee/OrderHistory.jsx';
 import EmployeeNotifications from './pages/employee/EmployeeNotifications.jsx';
 import EmployeeProfile from './pages/employee/EmployeeProfile.jsx';
+import Landing from './pages/Landing';
 
 /**
  * Main App Component
@@ -62,7 +63,7 @@ function App() {
   return (
     <Router>
      <Routes>
-      <Route path="/" element={<Root />} />
+      <Route path="/" element={<Landing />} />
       
       {/* Admin Dashboard Routes */}
       <Route
@@ -101,7 +102,6 @@ function App() {
         <Route path="notifications" element={<EmployeeNotifications />} />
         <Route path="profile" element={<EmployeeProfile />} />
       </Route>
-      
       
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />

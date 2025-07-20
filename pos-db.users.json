@@ -1,0 +1,47 @@
+[{
+  "_id": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "name": "Pranavi",
+  "email": "admin@gmail.com",
+  "password": "$2b$10$OJHFzjo/HGgYSl7TCvjkuuVt3rDdjq4kjddwiIXXpJspm56oceP7i",
+  "address": "admin address",
+  "role": "admin",
+  "createdAt": {
+    "$date": "2025-07-04T16:51:26.469Z"
+  },
+  "updatedAt": {
+    "$date": "2025-07-04T16:51:26.469Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "name": "rakshitha",
+  "email": "rakku@gmail.com",
+  "password": "$2b$10$CWMXPJiRVlvIRwcRcLsEcu1f90osI3osFqD0noTZ657c3aLiHFC4a",
+  "role": "employee",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "687c93b7e82f5ddef357fa65"
+  },
+  "name": "roopika",
+  "email": "roopika@gmail.com",
+  "password": "$2b$10$bh2vVEZVhe74/Z2..mGvR.FBUHaQUp6I0MXq2CxKxiDsxdZJ8Enge",
+  "role": "employee",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "687cb24d92f428976be1ff23"
+  },
+  "name": "saha",
+  "email": "saha@gmail.com",
+  "password": "$2b$10$.h24g3cT5rqby067PrIvKudxVnhFqexr1xT2eEBMAlPW/exUFGhKq",
+  "role": "employee",
+  "__v": 0
+}]

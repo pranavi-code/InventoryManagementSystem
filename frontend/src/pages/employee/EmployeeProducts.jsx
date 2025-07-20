@@ -22,15 +22,12 @@ const EmployeeProducts = () => {
         fetchData();
 
         // Real-time stock update via Socket.IO
-        socketRef.current = io('http://localhost:3000', {
-            transports: ['polling', 'websocket'],
-            reconnection: true,
-        });
+        socketRef.current = io('http://localhost:3000');
 
-        socketRef.current.on('stock_update', ({ productId, quantity }) => {
+        socketRef.current.on('stockUpdate', ({ productId, newQuantity }) => {
             setProducts((prevProducts) =>
                 prevProducts.map((prod) =>
-                    prod._id === productId ? { ...prod, quantity } : prod
+                    prod._id === productId ? { ...prod, quantity: newQuantity } : prod
                 )
             );
         });

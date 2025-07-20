@@ -1,0 +1,198 @@
+[{
+  "_id": {
+    "$oid": "6871f0dae61c0264747011ba"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakku.",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-07-12T05:21:30.886Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6871f23ee61c0264747013a3"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakku.",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-07-12T05:27:26.337Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6871f4ebe61c0264747017b7"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakku.",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-07-12T05:38:51.538Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6871f644e61c026474701ab2"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakku.",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-07-12T05:44:36.360Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68723864d8e52be3e71f4032"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakshitha.",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-07-12T10:26:44.204Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "687241a1f6e50253119a327d"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakshitha.",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-07-12T11:06:09.379Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6872451501d5144120e5f09e"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakshitha.",
+  "isRead": false,
+  "createdAt": {
+    "$date": "2025-07-12T11:20:53.244Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "687246aa4b03052b6dd4e2a3"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakshitha.",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-07-12T11:27:38.779Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6874ed9e6b4b64cee281985a"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakshitha.",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-07-14T11:44:30.822Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6874eea3d12e447d6d07a203"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakshitha.",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-07-14T11:48:51.530Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "687a5d4c519c7db14e59896d"
+  },
+  "recipient": {
+    "$oid": "6868068ed982023b45e170a8"
+  },
+  "sender": {
+    "$oid": "6871e9e846543f2f3185c01c"
+  },
+  "type": "order_placed",
+  "message": "New order placed by rakshitha.",
+  "isRead": true,
+  "createdAt": {
+    "$date": "2025-07-18T14:42:20.582Z"
+  },
+  "__v": 0
+}]

@@ -10,7 +10,10 @@ const PlaceOrder = ({ onOrderPlaced }) => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [cart, setCart] = useState([]);
+    const [cart, setCart] = useState(() => {
+        const savedCart = localStorage.getItem('cart');
+        return savedCart ? JSON.parse(savedCart) : [];
+    });
     const [orderForm, setOrderForm] = useState({
         priority: 'Medium',
         notes: ''
@@ -19,6 +22,10 @@ const PlaceOrder = ({ onOrderPlaced }) => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }, [cart]);
 
     const fetchData = async () => {
         try {

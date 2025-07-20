@@ -1,0 +1,48 @@
+[{
+  "_id": {
+    "$oid": "68724172f6e50253119a31d7"
+  },
+  "name": "gun",
+  "category": {
+    "$oid": "6872415af6e50253119a31c6"
+  },
+  "supplier": {
+    "$oid": "6871f421e61c026474701668"
+  },
+  "price": 50,
+  "quantity": 50,
+  "description": "blue in color",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6872450201d5144120e5f03a"
+  },
+  "name": "car",
+  "category": {
+    "$oid": "6872415af6e50253119a31c6"
+  },
+  "supplier": {
+    "$oid": "6871f421e61c026474701668"
+  },
+  "price": 100,
+  "quantity": 6,
+  "description": "pink in color",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "687c908dc7c3bdf6a224c120"
+  },
+  "name": "laptop",
+  "category": {
+    "$oid": "687c9073c7c3bdf6a224c10b"
+  },
+  "supplier": {
+    "$oid": "6871f421e61c026474701668"
+  },
+  "price": 500000,
+  "quantity": 9,
+  "description": "hp laptoop",
+  "__v": 0
+}]
