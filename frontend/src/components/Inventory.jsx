@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import API from '../utils/api';
 import { FaExclamationTriangle, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { io } from 'socket.io-client';
 
 const Inventory = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [filter, setFilter] = useState('all'); // all, low-stock, out-of-stock, in-stock
+    const socketRef = useRef(null);
 
     // Fetch products for inventory management
     const fetchProducts = async () => {
@@ -22,13 +24,32 @@ const Inventory = () => {
 
     useEffect(() => {
         fetchProducts();
+        
+        // Setup Socket.IO for real-time updates
+        socketRef.current = io('http://localhost:3000');
+        
+        socketRef.current.on('stock_update', (data) => {
+            setProducts(prevProducts => 
+                prevProducts.map(product => 
+                    product._id === data.productId 
+                        ? { ...product, quantity: data.quantity }
+                        : product
+                )
+            );
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
     }, []);
 
     // Update stock quantity
     const updateStock = async (productId, newQuantity) => {
         try {
             const product = products.find(p => p._id === productId);
-            const response = await axios.put(
+            const response = await API.put(
                 `/product/${productId}`,
                 {
                     ...product,

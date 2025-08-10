@@ -25,27 +25,58 @@ const EmployeeHome = () => {
         const interval = setInterval(fetchDashboardData, 30000); // Fetch every 30 seconds
 
         return () => clearInterval(interval);
-    }, []);
+    }, [user]);
 
     const fetchDashboardData = async () => {
         try {
-            const [statsRes, ordersRes] = await Promise.all([
-                API.get('/order/stats'),
-                API.get('/order')
-            ]);
+            if (!user || !(user.id || user._id)) return;
 
-            setStats(statsRes.data.stats || []);
-            setRecentOrders(ordersRes.data.orders?.slice(0, 5) || []);
+            // Get all orders and filter for current user
+            const ordersRes = await API.get('/order');
+            const allOrders = ordersRes.data.orders || [];
+            
+            // Filter orders for current user - check multiple possible user ID fields
+            const userOrders = allOrders.filter(order => {
+                const orderUserId = order.user || order.userId || order.customerId;
+                const currentUserId = user.id || user._id;
+                return orderUserId === currentUserId;
+            });
+
+            // Calculate user-specific stats
+            const userStats = {
+                total: userOrders.length,
+                pending: userOrders.filter(order => order.status === 'Pending').length,
+                approved: userOrders.filter(order => order.status === 'Approved').length,
+                processing: userOrders.filter(order => order.status === 'Processing').length,
+                shipped: userOrders.filter(order => order.status === 'Shipped').length,
+                delivered: userOrders.filter(order => order.status === 'Delivered').length,
+                cancelled: userOrders.filter(order => order.status === 'Cancelled').length,
+                rejected: userOrders.filter(order => order.status === 'Rejected').length
+            };
+
+            setStats(userStats);
+            setRecentOrders(userOrders.slice(0, 5));
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
+            // Set default values if API fails
+            setStats({
+                total: 0,
+                pending: 0,
+                approved: 0,
+                processing: 0,
+                shipped: 0,
+                delivered: 0,
+                cancelled: 0,
+                rejected: 0
+            });
+            setRecentOrders([]);
         } finally {
             setLoading(false);
         }
     };
 
     const getStatusCount = (status) => {
-        const statusStat = stats.find(stat => stat._id === status);
-        return statusStat ? statusStat.count : 0;
+        return stats[status.toLowerCase()] || 0;
     };
 
     if (loading) {
@@ -70,9 +101,7 @@ const EmployeeHome = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                            <p className="text-3xl font-bold text-gray-900">
-                                {stats.reduce((total, stat) => total + stat.count, 0)}
-                            </p>
+                            <p className="text-3xl font-bold text-gray-900">{stats.total || 0}</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                             <FaShoppingCart className="text-blue-600 text-xl" />
@@ -95,11 +124,11 @@ const EmployeeHome = () => {
                 <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Cancelled Orders</p>
-                            <p className="text-3xl font-bold text-red-600">{getStatusCount('Cancelled')}</p>
+                            <p className="text-sm font-medium text-gray-600">Approved Orders</p>
+                            <p className="text-3xl font-bold text-green-600">{getStatusCount('Approved')}</p>
                         </div>
-                        <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                            <FaTimesCircle className="text-red-600 text-xl" />
+                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <FaCheckCircle className="text-green-600 text-xl" />
                         </div>
                     </div>
                 </div>

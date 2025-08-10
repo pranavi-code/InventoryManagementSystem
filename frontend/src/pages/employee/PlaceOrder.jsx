@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../../utils/api';
 import { FaShoppingCart, FaSearch, FaPlus, FaMinus } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
+import { io } from 'socket.io-client';
 
 const PlaceOrder = ({ onOrderPlaced }) => {
     const { user } = useAuth();
@@ -18,9 +19,29 @@ const PlaceOrder = ({ onOrderPlaced }) => {
         priority: 'Medium',
         notes: ''
     });
+    const socketRef = useRef(null);
 
     useEffect(() => {
         fetchData();
+        
+        // Setup Socket.IO for real-time stock updates
+        socketRef.current = io('http://localhost:3000');
+        
+        socketRef.current.on('stock_update', (data) => {
+            setProducts(prevProducts => 
+                prevProducts.map(product => 
+                    product._id === data.productId 
+                        ? { ...product, quantity: data.quantity }
+                        : product
+                )
+            );
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -81,6 +102,13 @@ const PlaceOrder = ({ onOrderPlaced }) => {
 
     const removeFromCart = (productId) => {
         setCart(cart.filter(item => item._id !== productId));
+    };
+
+    const clearCart = () => {
+        if (window.confirm('Are you sure you want to clear your cart?')) {
+            setCart([]);
+            localStorage.removeItem('cart');
+        }
     };
 
     const getTotalAmount = () => {
@@ -213,10 +241,20 @@ const PlaceOrder = ({ onOrderPlaced }) => {
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow-sm border border-gray-100 sticky top-6">
                             <div className="p-6 border-b border-gray-100">
-                                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                                    <FaShoppingCart className="mr-2" />
-                                    Cart ({cart.length})
-                                </h2>
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                                        <FaShoppingCart className="mr-2" />
+                                        Cart ({cart.length})
+                                    </h2>
+                                    {cart.length > 0 && (
+                                        <button
+                                            onClick={clearCart}
+                                            className="text-sm text-red-500 hover:text-red-700"
+                                        >
+                                            Clear Cart
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="p-6">

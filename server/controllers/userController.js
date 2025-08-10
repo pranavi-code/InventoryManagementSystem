@@ -121,3 +121,29 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({ success: false, error: 'Server error' });
     }
 };
+
+export const toggleUserStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { isActive } = req.body;
+        
+        // Check if user is admin
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, error: "Unauthorized to toggle user status" });
+        }
+        
+        const updated = await User.findByIdAndUpdate(
+            id,
+            { isActive },
+            { new: true }
+        ).select('-password');
+        
+        if (!updated) {
+            return res.status(404).json({ success: false, error: "User not found" });
+        }
+        
+        res.json({ success: true, user: updated });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+};

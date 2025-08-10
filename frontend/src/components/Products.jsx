@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import API from '../utils/api';
 import { io } from 'socket.io-client';
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaBox, FaTimes, FaFilter, FaSort } from 'react-icons/fa';
 
 const Products = () => {
     const [formData, setFormData] = useState({
@@ -18,6 +19,8 @@ const Products = () => {
     const [editProductId, setEditProductId] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [search, setSearch] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('');
+    const [sortBy, setSortBy] = useState('name');
     const socketRef = useRef(null);
 
     // Fetch products, categories, suppliers
@@ -103,14 +106,11 @@ const Products = () => {
                     alert(response.data.error || 'Failed to update product');
                 }
             } else {
-                const response = await API.post(
-                    '/product/add',
-                    {
-                        ...formData,
-                        price: Number(formData.price),
-                        quantity: Number(formData.quantity)
-                    }
-                );
+                const response = await API.post('/product/add', {
+                    ...formData,
+                    price: Number(formData.price),
+                    quantity: Number(formData.quantity)
+                });
                 if (response.data.success) {
                     alert('Product added successfully');
                     setModalOpen(false);
@@ -121,7 +121,7 @@ const Products = () => {
                 }
             }
         } catch (error) {
-            alert(error.response?.data?.error || 'Error saving product');
+            alert('Error saving product');
             console.error(error);
         }
     };
@@ -129,10 +129,10 @@ const Products = () => {
     const handleEdit = (product) => {
         setFormData({
             name: product.name,
-            category: product.category?._id || product.category,
-            supplier: product.supplier?._id || product.supplier,
-            price: product.price,
-            quantity: product.quantity,
+            category: product.category,
+            supplier: product.supplier,
+            price: product.price.toString(),
+            quantity: product.quantity.toString(),
             description: product.description || ""
         });
         setEditProductId(product._id);
@@ -162,159 +162,314 @@ const Products = () => {
         setFormData({ name: "", category: "", supplier: "", price: "", quantity: "", description: "" });
     };
 
-    const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(search.toLowerCase()) ||
-        product.category?.categoryName.toLowerCase().includes(search.toLowerCase()) ||
-        product.supplier?.name.toLowerCase().includes(search.toLowerCase())
-    );
+    const getCategoryName = (categoryId) => {
+        const category = categories.find(cat => cat._id === categoryId);
+        return category ? category.categoryName : 'Unknown';
+    };
+
+    const getSupplierName = (supplierId) => {
+        const supplier = suppliers.find(sup => sup._id === supplierId);
+        return supplier ? supplier.name : 'Unknown';
+    };
+
+    const getStockStatus = (quantity) => {
+        if (quantity === 0) return { status: 'Out of Stock', color: 'text-red-600 bg-red-100' };
+        if (quantity < 10) return { status: 'Low Stock', color: 'text-yellow-600 bg-yellow-100' };
+        return { status: 'In Stock', color: 'text-green-600 bg-green-100' };
+    };
+
+    const filteredAndSortedProducts = products
+        .filter(product => {
+            const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase()) ||
+                                product.description?.toLowerCase().includes(search.toLowerCase());
+            const matchesCategory = !categoryFilter || product.category === categoryFilter;
+            return matchesSearch && matchesCategory;
+        })
+        .sort((a, b) => {
+            switch (sortBy) {
+                case 'name':
+                    return a.name.localeCompare(b.name);
+                case 'price':
+                    return a.price - b.price;
+                case 'quantity':
+                    return a.quantity - b.quantity;
+                case 'category':
+                    return getCategoryName(a.category).localeCompare(getCategoryName(b.category));
+                default:
+                    return 0;
+            }
+        });
+
+    const getRandomColor = (index) => {
+        const colors = [
+            'bg-gradient-to-r from-blue-500 to-blue-600',
+            'bg-gradient-to-r from-green-500 to-green-600',
+            'bg-gradient-to-r from-purple-500 to-purple-600',
+            'bg-gradient-to-r from-pink-500 to-pink-600',
+            'bg-gradient-to-r from-yellow-500 to-yellow-600',
+            'bg-gradient-to-r from-red-500 to-red-600',
+            'bg-gradient-to-r from-indigo-500 to-indigo-600',
+            'bg-gradient-to-r from-emerald-500 to-emerald-600'
+        ];
+        return colors[index % colors.length];
+    };
 
     return (
-        <div className='p-4'>
-            <h1 className='text-2xl font-bold mb-8'>Product Management</h1>
-            <div className='flex justify-between items-center mb-4'>
-                <input
-                    type="text"
-                    placeholder="Search Product"
-                    className="border p-2 rounded w-64"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
-                <button
-                    className='px-4 py-2 bg-blue-500 text-white rounded cursor-pointer'
-                    onClick={() => { setModalOpen(true); setEditProductId(null); setFormData({ name: "", category: "", supplier: "", price: "", quantity: "", description: "" }); }}
-                >
-                    Add Product
-                </button>
+        <div className="p-6 bg-gray-50 min-h-screen">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Products Management</h1>
+                <p className="text-gray-600">Manage your product inventory and track stock levels</p>
             </div>
-            {loading ? (
-                <div>Loading...</div>
-            ) : (
-                <table className="w-full border-collapse border border-gray-300">
-                    <thead>
-                        <tr className="bg-gray-200">
-                            <th className="border border-gray-300 p-2">S No</th>
-                            <th className="border border-gray-300 p-2">Name</th>
-                            <th className="border border-gray-300 p-2">Category</th>
-                            <th className="border border-gray-300 p-2">Supplier</th>
-                            <th className="border border-gray-300 p-2">Price</th>
-                            <th className="border border-gray-300 p-2">Stock</th>
-                            <th className="border border-gray-300 p-2">Description</th>
-                            <th className="border border-gray-300 p-2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products
-  .filter(prod => prod.name.toLowerCase().includes(search.toLowerCase()))
-  .map((product, index) => (
-                            <tr key={product._id}>
-                                <td className="border border-gray-300 p-2">{index + 1}</td>
-                                <td className="border border-gray-300 p-2">{product.name}</td>
-                                <td className="border border-gray-300 p-2">{product.category?.categoryName || ""}</td>
-                                <td className="border border-gray-300 p-2">{product.supplier?.name || ""}</td>
-                                <td className="border border-gray-300 p-2">{product.price}</td>
-                                <td className="border border-gray-300 p-2">{product.quantity}</td>
-                                <td className="border border-gray-300 p-2">{product.description}</td>
-                                <td className="border border-gray-300 p-2">
-                                    <button
-                                        className='px-2 py-1 bg-yellow-500 text-white rounded mr-2'
-                                        onClick={() => handleEdit(product)}
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        className='px-2 py-1 bg-red-500 text-white rounded'
-                                        onClick={() => handleDelete(product._id)}
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
+
+            {/* Search, Filter, and Add Button */}
+            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+                <div className="flex-1 relative">
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
+                <div className="flex gap-3">
+                    <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="">All Categories</option>
+                        {categories.map(cat => (
+                            <option key={cat._id} value={cat._id}>{cat.categoryName}</option>
                         ))}
-                    </tbody>
-                </table>
+                    </select>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="name">Sort by Name</option>
+                        <option value="price">Sort by Price</option>
+                        <option value="quantity">Sort by Quantity</option>
+                        <option value="category">Sort by Category</option>
+                    </select>
+                    <button
+                        onClick={() => setModalOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors duration-200"
+                    >
+                        <FaPlus />
+                        Add Product
+                    </button>
+                </div>
+            </div>
+
+            {/* Products Grid */}
+            {loading ? (
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-xl text-gray-600">Loading products...</div>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredAndSortedProducts.map((product, index) => {
+                        const stockStatus = getStockStatus(product.quantity);
+                        return (
+                            <div key={product._id} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-3 rounded-lg ${getRandomColor(index)}`}>
+                                        <FaBox className="text-white text-xl" />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleEdit(product)}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        >
+                                            <FaEdit />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(product._id)}
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">{product.name}</h3>
+                                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                    {product.description || 'No description available'}
+                                </p>
+                                
+                                <div className="space-y-2 mb-4">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Category:</span>
+                                        <span className="font-medium">{getCategoryName(product.category)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Supplier:</span>
+                                        <span className="font-medium">{getSupplierName(product.supplier)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Price:</span>
+                                        <span className="font-bold text-green-600">${product.price}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Quantity:</span>
+                                        <span className="font-medium">{product.quantity}</span>
+                                    </div>
+                                </div>
+                                
+                                <div className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${stockStatus.color}`}>
+                                    {stockStatus.status}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             )}
 
-            {modalOpen && (
-                <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center z-50'>
-                    <div className='bg-white p-6 rounded shadow-md w-full max-w-md relative'>
-                        <h2 className='text-xl font-bold mb-4'>{editProductId ? "Edit Product" : "Add Product"}</h2>
+            {/* Empty State */}
+            {!loading && filteredAndSortedProducts.length === 0 && (
+                <div className="text-center py-12">
+                    <FaBox className="text-6xl text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
+                    <p className="text-gray-500 mb-4">
+                        {search || categoryFilter ? 'Try adjusting your search or filter criteria' : 'Get started by adding your first product'}
+                    </p>
+                    {!search && !categoryFilter && (
                         <button
-                            className='absolute top-4 right-4 font-bold text-lg cursor-pointer'
-                            onClick={closeModal}
+                            onClick={() => setModalOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 mx-auto transition-colors duration-200"
                         >
-                            X
+                            <FaPlus />
+                            Add Product
                         </button>
-                        <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
-                            <input
-                                type='text'
-                                name='name'
-                                value={formData.name}
-                                onChange={handleChange}
-                                placeholder='Product Name'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <select
-                                name='category'
-                                value={formData.category}
-                                onChange={handleChange}
-                                className='border p-2 rounded'
-                                required
+                    )}
+                </div>
+            )}
+
+            {/* Modal */}
+            {modalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {editProductId ? 'Edit Product' : 'Add New Product'}
+                            </h2>
+                            <button
+                                onClick={closeModal}
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
                             >
-                                <option value="">Select Category</option>
-                                {categories.map(cat => (
-                                    <option key={cat._id} value={cat._id}>{cat.categoryName}</option>
-                                ))}
-                            </select>
-                            <select
-                                name='supplier'
-                                value={formData.supplier}
-                                onChange={handleChange}
-                                className='border p-2 rounded'
-                                required
-                            >
-                                <option value="">Select Supplier</option>
-                                {suppliers.map(sup => (
-                                    <option key={sup._id} value={sup._id}>{sup.name}</option>
-                                ))}
-                            </select>
-                            <input
-                                type='number'
-                                name='price'
-                                value={formData.price}
-                                onChange={handleChange}
-                                placeholder='Price'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <input
-                                type='number'
-                                name='quantity'
-                                value={formData.quantity}
-                                onChange={handleChange}
-                                placeholder='Stock'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <input
-                                type='text'
-                                name='description'
-                                value={formData.description}
-                                onChange={handleChange}
-                                placeholder='Description'
-                                className='border p-2 rounded'
-                            />
-                            <div className="flex space-x-2">
-                                <button
-                                    type='submit'
-                                    className='w-full rounded-md bg-green-500 text-white p-3 cursor-pointer hover:bg-green-600'
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Product Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter product name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Category *
+                                </label>
+                                <select
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
-                                    {editProductId ? "Save Changes" : "Add Product"}
+                                    <option value="">Select Category</option>
+                                    {categories.map(cat => (
+                                        <option key={cat._id} value={cat._id}>{cat.categoryName}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Supplier *
+                                </label>
+                                <select
+                                    name="supplier"
+                                    value={formData.supplier}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Select Supplier</option>
+                                    {suppliers.map(sup => (
+                                        <option key={sup._id} value={sup._id}>{sup.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Price *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        value={formData.price}
+                                        onChange={handleChange}
+                                        required
+                                        min="0"
+                                        step="0.01"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Quantity *
+                                    </label>
+                                    <input
+                                        type="number"
+                                        name="quantity"
+                                        value={formData.quantity}
+                                        onChange={handleChange}
+                                        required
+                                        min="0"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Description
+                                </label>
+                                <textarea
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    rows="3"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter product description"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
+                                >
+                                    {editProductId ? 'Update Product' : 'Add Product'}
                                 </button>
                                 <button
                                     type="button"
-                                    className='w-full rounded-md bg-gray-500 text-white p-3 cursor-pointer hover:bg-gray-600'
                                     onClick={closeModal}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition-colors"
                                 >
                                     Cancel
                                 </button>

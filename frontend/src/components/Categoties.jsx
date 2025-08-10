@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaTags, FaTimes } from 'react-icons/fa';
 
 const Categories = () => {
     const [categoryName, setCategoryName] = useState('');
@@ -112,7 +113,6 @@ const Categories = () => {
         }
     };
 
-    // Handle modal close
     const closeModal = () => {
         setModalOpen(false);
         setEditCategoryId(null);
@@ -120,105 +120,166 @@ const Categories = () => {
         setCategoryDescription('');
     };
 
-    // Filtered categories by search
     const filteredCategories = categories.filter(cat =>
-        cat.categoryName.toLowerCase().includes(search.toLowerCase())
+        cat.categoryName.toLowerCase().includes(search.toLowerCase()) ||
+        cat.categoryDescription.toLowerCase().includes(search.toLowerCase())
     );
 
+    const getRandomColor = (index) => {
+        const colors = [
+            'bg-gradient-to-r from-blue-500 to-blue-600',
+            'bg-gradient-to-r from-green-500 to-green-600',
+            'bg-gradient-to-r from-purple-500 to-purple-600',
+            'bg-gradient-to-r from-pink-500 to-pink-600',
+            'bg-gradient-to-r from-yellow-500 to-yellow-600',
+            'bg-gradient-to-r from-red-500 to-red-600',
+            'bg-gradient-to-r from-indigo-500 to-indigo-600',
+            'bg-gradient-to-r from-emerald-500 to-emerald-600'
+        ];
+        return colors[index % colors.length];
+    };
+
     return (
-        <div className='p-4'>
-            <h1 className='text-2xl font-bold mb-8'>Category Management</h1>
-            <div className='flex justify-between items-center mb-4'>
-                <input
-                    type="text"
-                    placeholder="Search Category"
-                    className="border p-2 rounded w-64"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
+        <div className="p-6 bg-gray-50 min-h-screen">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Categories Management</h1>
+                <p className="text-gray-600">Manage your product categories and organize your inventory</p>
+            </div>
+
+            {/* Search and Add Button */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1 relative">
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search categories..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
                 <button
-                    className='px-4 py-2 bg-blue-500 text-white rounded cursor-pointer'
-                    onClick={() => { setModalOpen(true); setEditCategoryId(null); setCategoryName(''); setCategoryDescription(''); }}
+                    onClick={() => setModalOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors duration-200"
                 >
+                    <FaPlus />
                     Add Category
                 </button>
             </div>
+
+            {/* Categories Grid */}
             {loading ? (
-                <div>Loading...</div>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-xl text-gray-600">Loading categories...</div>
+                </div>
             ) : (
-                <table className="w-full border-collapse border border-gray-300">
-                    <thead>
-                        <tr className="bg-gray-200">
-                            <th className="border border-gray-300 p-2">S No</th>
-                            <th className="border border-gray-300 p-2">Name</th>
-                            <th className="border border-gray-300 p-2">Description</th>
-                            <th className="border border-gray-300 p-2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredCategories.map((cat, index) => (
-                            <tr key={cat._id}>
-                                <td className="border border-gray-300 p-2">{index + 1}</td>
-                                <td className="border border-gray-300 p-2">{cat.categoryName}</td>
-                                <td className="border border-gray-300 p-2">{cat.categoryDescription}</td>
-                                <td className="border border-gray-300 p-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredCategories.map((category, index) => (
+                        <div key={category._id} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className={`p-3 rounded-lg ${getRandomColor(index)}`}>
+                                    <FaTags className="text-white text-xl" />
+                                </div>
+                                <div className="flex gap-2">
                                     <button
-                                        className='px-2 py-1 bg-yellow-500 text-white rounded mr-2'
-                                        onClick={() => handleEdit(cat)}
+                                        onClick={() => handleEdit(category)}
+                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                     >
-                                        Edit
+                                        <FaEdit />
                                     </button>
                                     <button
-                                        className='px-2 py-1 bg-red-500 text-white rounded'
-                                        onClick={() => handleDelete(cat._id)}
+                                        onClick={() => handleDelete(category._id)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                     >
-                                        Delete
+                                        <FaTrash />
                                     </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{category.categoryName}</h3>
+                            <p className="text-gray-600 text-sm mb-4">
+                                {category.categoryDescription || 'No description available'}
+                            </p>
+                            <div className="text-xs text-gray-500">
+                                ID: {category._id.slice(-8)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             )}
 
-            {modalOpen && (
-                <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center z-50'>
-                    <div className='bg-white p-6 rounded shadow-md w-full max-w-md relative'>
-                        <h2 className='text-xl font-bold mb-4'>{editCategoryId ? "Edit Category" : "Add Category"}</h2>
+            {/* Empty State */}
+            {!loading && filteredCategories.length === 0 && (
+                <div className="text-center py-12">
+                    <FaTags className="text-6xl text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">No categories found</h3>
+                    <p className="text-gray-500 mb-4">
+                        {search ? 'Try adjusting your search terms' : 'Get started by adding your first category'}
+                    </p>
+                    {!search && (
                         <button
-                            className='absolute top-4 right-4 font-bold text-lg cursor-pointer'
-                            onClick={closeModal}
+                            onClick={() => setModalOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 mx-auto transition-colors duration-200"
                         >
-                            X
+                            <FaPlus />
+                            Add Category
                         </button>
-                        <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
-                            <input
-                                type='text'
-                                value={categoryName}
-                                onChange={e => setCategoryName(e.target.value)}
-                                placeholder='Category Name'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <input
-                                type='text'
-                                value={categoryDescription}
-                                onChange={e => setCategoryDescription(e.target.value)}
-                                placeholder='Category Description'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <div className="flex space-x-2">
+                    )}
+                </div>
+            )}
+
+            {/* Modal */}
+            {modalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {editCategoryId ? 'Edit Category' : 'Add New Category'}
+                            </h2>
+                            <button
+                                onClick={closeModal}
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Category Name
+                                </label>
+                                <input
+                                    type="text"
+                                    value={categoryName}
+                                    onChange={(e) => setCategoryName(e.target.value)}
+                                    required
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter category name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Description
+                                </label>
+                                <textarea
+                                    value={categoryDescription}
+                                    onChange={(e) => setCategoryDescription(e.target.value)}
+                                    rows="3"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter category description"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-4">
                                 <button
-                                    type='submit'
-                                    className='w-full rounded-md bg-green-500 text-white p-3 cursor-pointer hover:bg-green-600'
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
                                 >
-                                    {editCategoryId ? "Save Changes" : "Add Category"}
+                                    {editCategoryId ? 'Update Category' : 'Add Category'}
                                 </button>
                                 <button
                                     type="button"
-                                    className='w-full rounded-md bg-gray-500 text-white p-3 cursor-pointer hover:bg-gray-600'
                                     onClick={closeModal}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition-colors"
                                 >
                                     Cancel
                                 </button>

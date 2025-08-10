@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import API from '../../utils/api';
-import { getStatusIcon, getStatusColor } from '../../utils/orderUtils';
+import { io } from 'socket.io-client';
 import {
     FaBell,
     FaCheckCircle,
@@ -9,30 +10,113 @@ import {
     FaExclamationTriangle,
     FaTruck,
     FaTrash,
-    FaMarkdown
+    FaMarkdown,
+    FaFilter,
+    FaEnvelope,
+    FaEnvelopeOpen,
+    FaClock
 } from 'react-icons/fa';
 
 const EmployeeNotifications = () => {
+    const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const socketRef = useRef(null);
+
+    // Load persisted notification states from localStorage
+    const loadPersistedStates = () => {
+        try {
+            const persisted = localStorage.getItem('employeeNotificationStates');
+            return persisted ? JSON.parse(persisted) : {};
+        } catch (error) {
+            console.error('Error loading persisted states:', error);
+            return {};
+        }
+    };
+
+    // Save notification states to localStorage
+    const savePersistedStates = (states) => {
+        try {
+            localStorage.setItem('employeeNotificationStates', JSON.stringify(states));
+        } catch (error) {
+            console.error('Error saving persisted states:', error);
+        }
+    };
+
+    // Load cleared notifications from localStorage
+    const loadClearedNotifications = () => {
+        try {
+            const cleared = localStorage.getItem('employeeClearedNotifications');
+            return cleared ? JSON.parse(cleared) : [];
+        } catch (error) {
+            console.error('Error loading cleared notifications:', error);
+            return [];
+        }
+    };
+
+    // Save cleared notifications to localStorage
+    const saveClearedNotifications = (clearedIds) => {
+        try {
+            localStorage.setItem('employeeClearedNotifications', JSON.stringify(clearedIds));
+        } catch (error) {
+            console.error('Error saving cleared notifications:', error);
+        }
+    };
 
     useEffect(() => {
         fetchNotifications();
-        // Set up polling for real-time notifications
-        const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
-        return () => clearInterval(interval);
-    }, []);
+        setupSocketConnection();
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
+    }, [user]);
+
+    const setupSocketConnection = () => {
+        socketRef.current = io('http://localhost:3000');
+        
+        socketRef.current.on('notification', (newNotification) => {
+            setNotifications(prev => [newNotification, ...prev]);
+        });
+
+        socketRef.current.on('order_status_update', () => {
+            fetchNotifications();
+        });
+    };
 
     const fetchNotifications = async () => {
         try {
-            // Fetch orders to generate notifications
-            const response = await API.get('/order');
-            const orders = response.data.orders || [];
+            if (!user || !(user.id || user._id)) return;
+
+            // Get user's orders to generate notifications
+            const ordersRes = await API.get('/order');
+            const allOrders = ordersRes.data.orders || [];
             
-            // Generate notifications based on order status changes
-            const generatedNotifications = generateNotifications(orders);
-            setNotifications(generatedNotifications);
+            // Filter orders for current user
+            const userOrders = allOrders.filter(order => 
+                order.user === (user.id || user._id) || 
+                order.userId === (user.id || user._id)
+            );
+
+            // Generate notifications based on user's orders
+            const generatedNotifications = generateNotifications(userOrders);
+            
+            // Apply persisted states
+            const persistedStates = loadPersistedStates();
+            const clearedNotifications = loadClearedNotifications();
+            
+            const processedNotifications = generatedNotifications
+                .filter(notification => !clearedNotifications.includes(notification.id))
+                .map(notification => ({
+                    ...notification,
+                    read: persistedStates[notification.id]?.read ?? notification.read
+                }));
+            
+            setNotifications(processedNotifications);
         } catch (error) {
             console.error('Error fetching notifications:', error);
         } finally {
@@ -48,77 +132,106 @@ const EmployeeNotifications = () => {
             const orderDate = new Date(order.orderDate);
             const daysSinceOrder = Math.floor((now - orderDate) / (1000 * 60 * 60 * 24));
 
-            // Order status notifications
-            if (order.status === 'Approved' && order.approvedDate) {
-                const approvedDate = new Date(order.approvedDate);
+            // Order status notifications - show recent status changes
+            if (order.status === 'Approved') {
+                const approvedDate = order.approvedDate ? new Date(order.approvedDate) : orderDate;
                 const hoursSinceApproval = Math.floor((now - approvedDate) / (1000 * 60 * 60));
                 
-                if (hoursSinceApproval <= 24) {
+                if (hoursSinceApproval <= 48) { // Show for 48 hours
                     notifications.push({
                         id: `approved-${order._id}`,
                         type: 'success',
                         title: 'Order Approved',
                         message: `Your order for ${order.product?.name} has been approved!`,
-                        timestamp: order.approvedDate,
                         orderId: order._id,
-                        read: false
+                        read: false,
+                        priority: 'medium'
                     });
                 }
             }
 
             if (order.status === 'Rejected' && order.rejectionReason) {
-                notifications.push({
-                    id: `rejected-${order._id}`,
-                    type: 'error',
-                    title: 'Order Rejected',
-                    message: `Your order for ${order.product?.name} was rejected: ${order.rejectionReason}`,
-                    timestamp: order.orderDate,
-                    orderId: order._id,
-                    read: false
-                });
+                const hoursSinceRejection = Math.floor((now - orderDate) / (1000 * 60 * 60));
+                if (hoursSinceRejection <= 72) { // Show for 72 hours
+                    notifications.push({
+                        id: `rejected-${order._id}`,
+                        type: 'error',
+                        title: 'Order Rejected',
+                        message: `Your order for ${order.product?.name} was rejected: ${order.rejectionReason}`,
+                        timestamp: orderDate,
+                        orderId: order._id,
+                        read: false,
+                        priority: 'high'
+                    });
+                }
             }
 
             if (order.status === 'Shipped') {
-                notifications.push({
-                    id: `shipped-${order._id}`,
-                    type: 'info',
-                    title: 'Order Shipped',
-                    message: `Your order for ${order.product?.name} has been shipped!`,
-                    timestamp: order.orderDate,
-                    orderId: order._id,
-                    read: false
-                });
+                const hoursSinceShipped = Math.floor((now - orderDate) / (1000 * 60 * 60));
+                if (hoursSinceShipped <= 24) { // Show for 24 hours
+                    notifications.push({
+                        id: `shipped-${order._id}`,
+                        type: 'info',
+                        title: 'Order Shipped',
+                        message: `Your order for ${order.product?.name} has been shipped!`,
+                        timestamp: orderDate,
+                        orderId: order._id,
+                        read: false,
+                        priority: 'medium'
+                    });
+                }
             }
 
             if (order.status === 'Delivered') {
-                notifications.push({
-                    id: `delivered-${order._id}`,
-                    type: 'success',
-                    title: 'Order Delivered',
-                    message: `Your order for ${order.product?.name} has been delivered!`,
-                    timestamp: order.orderDate,
-                    orderId: order._id,
-                    read: false
-                });
+                const hoursSinceDelivered = Math.floor((now - orderDate) / (1000 * 60 * 60));
+                if (hoursSinceDelivered <= 24) { // Show for 24 hours
+                    notifications.push({
+                        id: `delivered-${order._id}`,
+                        type: 'success',
+                        title: 'Order Delivered',
+                        message: `Your order for ${order.product?.name} has been delivered!`,
+                        timestamp: orderDate,
+                        orderId: order._id,
+                        read: false,
+                        priority: 'low'
+                    });
+                }
             }
 
-            // Pending order reminders
-            if (order.status === 'Pending' && daysSinceOrder >= 3) {
+            // Pending order reminders - show for orders pending more than 2 days
+            if (order.status === 'Pending' && daysSinceOrder >= 2) {
                 notifications.push({
                     id: `pending-${order._id}`,
                     type: 'warning',
                     title: 'Order Pending',
                     message: `Your order for ${order.product?.name} has been pending for ${daysSinceOrder} days.`,
-                    timestamp: order.orderDate,
                     orderId: order._id,
-                    read: false
+                    read: false,
+                    priority: 'medium'
                 });
             }
 
+            // Processing notifications
+            if (order.status === 'Processing') {
+                const hoursSinceProcessing = Math.floor((now - orderDate) / (1000 * 60 * 60));
+                if (hoursSinceProcessing <= 12) { // Show for 12 hours
+                    notifications.push({
+                        id: `processing-${order._id}`,
+                        type: 'info',
+                        title: 'Order Processing',
+                        message: `Your order for ${order.product?.name} is being processed.`,
+                        timestamp: orderDate,
+                        orderId: order._id,
+                        read: false,
+                        priority: 'low'
+                    });
+                }
+            }
+
             // Estimated delivery notifications
-            if (order.estimatedDelivery && order.status === 'Shipped') {
-                const deliveryDate = new Date(order.estimatedDelivery);
-                const daysUntilDelivery = Math.ceil((deliveryDate - now) / (1000 * 60 * 60 * 24));
+            if (order.status === 'Shipped' && order.estimatedDelivery) {
+                const estimatedDelivery = new Date(order.estimatedDelivery);
+                const daysUntilDelivery = Math.floor((estimatedDelivery - now) / (1000 * 60 * 60 * 24));
                 
                 if (daysUntilDelivery <= 1 && daysUntilDelivery >= 0) {
                     notifications.push({
@@ -128,34 +241,100 @@ const EmployeeNotifications = () => {
                         message: `Your order for ${order.product?.name} is expected to arrive ${daysUntilDelivery === 0 ? 'today' : 'tomorrow'}!`,
                         timestamp: new Date(),
                         orderId: order._id,
-                        read: false
+                        read: false,
+                        priority: 'medium'
                     });
                 }
             }
         });
 
         // Sort by timestamp (newest first)
-        return notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        return notifications.sort((a, b) => {
+            if (a.timestamp && b.timestamp) {
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            }
+            return 0;
+        });
     };
 
+    const handleMarkAsRead = (id) => {
+        // Update local state immediately
+        setNotifications(prev =>
+            prev.map(n => n.id === id ? { ...n, read: true } : n)
+        );
 
-    const markAsRead = (notificationId) => {
-        setNotifications(notifications.map(notif => 
-            notif.id === notificationId ? { ...notif, read: true } : notif
-        ));
+        // Persist the read state
+        const persistedStates = loadPersistedStates();
+        persistedStates[id] = { ...persistedStates[id], read: true };
+        savePersistedStates(persistedStates);
     };
 
     const markAllAsRead = () => {
-        setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+        const updatedNotifications = notifications.map(n => ({ ...n, read: true }));
+        setNotifications(updatedNotifications);
+
+        // Persist all read states
+        const persistedStates = loadPersistedStates();
+        notifications.forEach(notification => {
+            persistedStates[notification.id] = { ...persistedStates[notification.id], read: true };
+        });
+        savePersistedStates(persistedStates);
     };
 
-    const deleteNotification = (notificationId) => {
-        setNotifications(notifications.filter(notif => notif.id !== notificationId));
+    const deleteNotification = (id) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        
+        // Add to cleared notifications
+        const clearedNotifications = loadClearedNotifications();
+        if (!clearedNotifications.includes(id)) {
+            clearedNotifications.push(id);
+            saveClearedNotifications(clearedNotifications);
+        }
     };
 
     const clearAllNotifications = () => {
         if (window.confirm('Are you sure you want to clear all notifications?')) {
+            // Add all notification IDs to cleared list
+            const clearedNotifications = loadClearedNotifications();
+            const allIds = notifications.map(n => n.id);
+            const updatedCleared = [...new Set([...clearedNotifications, ...allIds])];
+            saveClearedNotifications(updatedCleared);
+            
             setNotifications([]);
+        }
+    };
+
+    const getNotificationIcon = (type) => {
+        switch (type) {
+            case 'success':
+                return <FaCheckCircle className="text-green-500" />;
+            case 'error':
+                return <FaTimesCircle className="text-red-500" />;
+            case 'warning':
+                return <FaExclamationTriangle className="text-yellow-500" />;
+            case 'info':
+                return <FaInfoCircle className="text-blue-500" />;
+            default:
+                return <FaBell className="text-gray-500" />;
+        }
+    };
+
+    const getNotificationColor = (type, priority) => {
+        if (priority === 'high') return 'border-red-500 bg-red-50';
+        if (priority === 'medium') return 'border-yellow-500 bg-yellow-50';
+        if (priority === 'low') return 'border-blue-500 bg-blue-50';
+        
+        switch (type) {
+            case 'success':
+                return 'border-green-500 bg-green-50';
+            case 'error':
+                return 'border-red-500 bg-red-50';
+            case 'warning':
+                return 'border-yellow-500 bg-yellow-50';
+            case 'info':
+                return 'border-blue-500 bg-blue-50';
+            default:
+                return 'border-gray-500 bg-gray-50';
         }
     };
 
@@ -163,9 +342,12 @@ const EmployeeNotifications = () => {
         if (filter === 'unread') return !notif.read;
         if (filter === 'read') return notif.read;
         return true;
-    });
+    }).filter(notif => 
+        notif.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        notif.message.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    const unreadCount = notifications.filter(notif => !notif.read).length;
+    const unreadCount = notifications.filter(n => !n.read).length;
 
     if (loading) {
         return (
@@ -181,10 +363,8 @@ const EmployeeNotifications = () => {
             <div className="mb-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-                        <p className="text-gray-600 mt-2">
-                            Stay updated with your order status and important updates
-                        </p>
+                        <h1 className="text-3xl font-bold text-gray-900">My Notifications</h1>
+                        <p className="text-gray-600 mt-2">Stay updated with your order status and important alerts</p>
                     </div>
                     <div className="flex items-center space-x-2">
                         {unreadCount > 0 && (
@@ -198,18 +378,32 @@ const EmployeeNotifications = () => {
 
             {/* Controls */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-center space-x-4">
-                        <select
-                            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                        >
-                            <option value="all">All Notifications</option>
-                            <option value="unread">Unread Only</option>
-                            <option value="read">Read Only</option>
-                        </select>
-                        <span className="text-sm text-gray-600">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex items-center space-x-2">
+                            <FaFilter className="text-gray-400" />
+                            <select
+                                className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                value={filter}
+                                onChange={(e) => setFilter(e.target.value)}
+                            >
+                                <option value="all">All Notifications</option>
+                                <option value="unread">Unread Only</option>
+                                <option value="read">Read Only</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="text"
+                                placeholder="Search notifications..."
+                                className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        <span className="text-sm text-gray-600 flex items-center">
                             Showing {filteredNotifications.length} notifications
                         </span>
                     </div>
@@ -242,7 +436,7 @@ const EmployeeNotifications = () => {
                 {filteredNotifications.map((notification) => (
                     <div
                         key={notification.id}
-                        className={`bg-white rounded-lg shadow-sm border-l-4 p-6 ${getNotificationColor(notification.type)} ${
+                        className={`bg-white rounded-lg shadow-sm border-l-4 p-6 ${getNotificationColor(notification.type, notification.priority)} ${
                             !notification.read ? 'ring-2 ring-blue-100' : ''
                         }`}
                     >
@@ -257,12 +451,21 @@ const EmployeeNotifications = () => {
                                         {!notification.read && (
                                             <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                                         )}
+                                        {notification.priority && (
+                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                notification.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                                notification.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                'bg-blue-100 text-blue-800'
+                                            }`}>
+                                                {notification.priority.toUpperCase()}
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-gray-700 mb-2">{notification.message}</p>
                                     <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                        <span>{new Date(notification.timestamp).toLocaleString()}</span>
+                                        <span>{notification.timestamp ? new Date(notification.timestamp).toLocaleString() : 'Just now'}</span>
                                         {notification.orderId && (
-                                            <span>Order: #{notification.orderId.slice(-8)}</span>
+                                            <span>Order ID: #{notification.orderId.slice(-8)}</span>
                                         )}
                                     </div>
                                 </div>
@@ -270,9 +473,10 @@ const EmployeeNotifications = () => {
                             <div className="flex items-center space-x-2">
                                 {!notification.read && (
                                     <button
-                                        onClick={() => markAsRead(notification.id)}
-                                        className="text-blue-500 hover:text-blue-700 text-sm font-medium"
+                                        onClick={() => handleMarkAsRead(notification.id)}
+                                        className="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center"
                                     >
+                                        <FaEnvelopeOpen className="mr-1" />
                                         Mark as read
                                     </button>
                                 )}
@@ -295,6 +499,7 @@ const EmployeeNotifications = () => {
                     <p className="text-sm text-gray-500">
                         {filter === 'unread' ? 'All notifications have been read' : 
                          filter === 'read' ? 'No read notifications' : 
+                         searchTerm ? 'No notifications match your search' :
                          'You\'ll see notifications here when there are updates to your orders'}
                     </p>
                 </div>
@@ -303,7 +508,7 @@ const EmployeeNotifications = () => {
             {/* Auto-refresh indicator */}
             <div className="mt-6 text-center">
                 <p className="text-xs text-gray-500">
-                    Notifications auto-refresh every 30 seconds
+                    Notifications update in real-time via WebSocket connection
                 </p>
             </div>
         </div>

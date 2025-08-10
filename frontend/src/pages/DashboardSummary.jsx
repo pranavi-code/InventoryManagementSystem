@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { FaBox, FaTags, FaTruck, FaShoppingCart, FaUsers, FaExclamationTriangle, FaChartLine, FaDollarSign } from 'react-icons/fa';
 
 const DashboardSummary = () => {
     const [stats, setStats] = useState({
@@ -9,8 +10,9 @@ const DashboardSummary = () => {
         orders: 0,
         users: 0,
         lowStock: 0,
+        totalRevenue: 0,
+        pendingOrders: 0
     });
-    const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -26,82 +28,120 @@ const DashboardSummary = () => {
                     axios.get('http://localhost:3000/api/user', { headers: { Authorization: `Bearer ${token}` } }),
                 ]);
                 const products = prodRes.data.products || [];
+                const orders = ordRes.data.orders || [];
+                
+                // Calculate total revenue
+                const totalRevenue = orders.reduce((sum, order) => {
+                    return sum + (order.totalAmount || 0);
+                }, 0);
+
+                // Calculate pending orders
+                const pendingOrders = orders.filter(order => order.status === 'Pending').length;
+
                 setStats({
                     products: products.length,
                     categories: catRes.data.categories.length,
                     suppliers: supRes.data.suppliers.length,
-                    orders: ordRes.data.orders.length,
+                    orders: orders.length,
                     users: userRes.data.users.length,
                     lowStock: products.filter(p => p.quantity < 10).length,
+                    totalRevenue: totalRevenue,
+                    pendingOrders: pendingOrders
                 });
-                setRecentOrders(ordRes.data.orders.slice(-5).reverse());
             } catch (error) {
-                // handle error
+                console.error('Error fetching stats:', error);
             }
             setLoading(false);
         };
         fetchStats();
     }, []);
 
+    const statCards = [
+        {
+            title: 'Total Products',
+            value: stats.products,
+            icon: FaBox,
+            color: 'bg-gradient-to-r from-blue-500 to-blue-600',
+            textColor: 'text-blue-600'
+        },
+        {
+            title: 'Categories',
+            value: stats.categories,
+            icon: FaTags,
+            color: 'bg-gradient-to-r from-green-500 to-green-600',
+            textColor: 'text-green-600'
+        },
+        {
+            title: 'Suppliers',
+            value: stats.suppliers,
+            icon: FaTruck,
+            color: 'bg-gradient-to-r from-yellow-500 to-yellow-600',
+            textColor: 'text-yellow-600'
+        },
+        {
+            title: 'Total Orders',
+            value: stats.orders,
+            icon: FaShoppingCart,
+            color: 'bg-gradient-to-r from-purple-500 to-purple-600',
+            textColor: 'text-purple-600'
+        },
+        {
+            title: 'Active Users',
+            value: stats.users,
+            icon: FaUsers,
+            color: 'bg-gradient-to-r from-pink-500 to-pink-600',
+            textColor: 'text-pink-600'
+        },
+        {
+            title: 'Low Stock Items',
+            value: stats.lowStock,
+            icon: FaExclamationTriangle,
+            color: 'bg-gradient-to-r from-red-500 to-red-600',
+            textColor: 'text-red-600'
+        },
+        {
+            title: 'Total Revenue',
+            value: `$${stats.totalRevenue.toLocaleString()}`,
+            icon: FaDollarSign,
+            color: 'bg-gradient-to-r from-emerald-500 to-emerald-600',
+            textColor: 'text-emerald-600'
+        },
+        {
+            title: 'Pending Orders',
+            value: stats.pendingOrders,
+            icon: FaChartLine,
+            color: 'bg-gradient-to-r from-indigo-500 to-indigo-600',
+            textColor: 'text-indigo-600'
+        }
+    ];
+
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
+        <div className="p-6 bg-gray-50 min-h-screen">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+                <p className="text-gray-600">Welcome back! Here's an overview of your inventory system.</p>
+            </div>
+            
             {loading ? (
-                <div>Loading...</div>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-xl text-gray-600">Loading dashboard...</div>
+                </div>
             ) : (
-                <>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-                        <div className="bg-blue-100 p-4 rounded shadow text-center">
-                            <div className="text-3xl font-bold">{stats.products}</div>
-                            <div>Products</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {statCards.map((card, index) => (
+                        <div key={index} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className={`p-3 rounded-lg ${card.color}`}>
+                                    <card.icon className="text-white text-xl" />
+                                </div>
+                                <div className={`text-2xl font-bold ${card.textColor}`}>
+                                    {card.value}
+                                </div>
+                            </div>
+                            <h3 className="text-gray-700 font-semibold text-lg">{card.title}</h3>
                         </div>
-                        <div className="bg-green-100 p-4 rounded shadow text-center">
-                            <div className="text-3xl font-bold">{stats.categories}</div>
-                            <div>Categories</div>
-                        </div>
-                        <div className="bg-yellow-100 p-4 rounded shadow text-center">
-                            <div className="text-3xl font-bold">{stats.suppliers}</div>
-                            <div>Suppliers</div>
-                        </div>
-                        <div className="bg-purple-100 p-4 rounded shadow text-center">
-                            <div className="text-3xl font-bold">{stats.orders}</div>
-                            <div>Orders</div>
-                        </div>
-                        <div className="bg-pink-100 p-4 rounded shadow text-center">
-                            <div className="text-3xl font-bold">{stats.users}</div>
-                            <div>Users</div>
-                        </div>
-                        <div className="bg-red-100 p-4 rounded shadow text-center">
-                            <div className="text-3xl font-bold">{stats.lowStock}</div>
-                            <div>Low Stock (&lt;10)</div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded shadow p-4">
-                        <h2 className="text-xl font-bold mb-4">Recent Orders</h2>
-                        <table className="w-full border-collapse border border-gray-300">
-                            <thead>
-                                <tr className="bg-gray-200">
-                                    <th className="border border-gray-300 p-2">Product</th>
-                                    <th className="border border-gray-300 p-2">Customer</th>
-                                    <th className="border border-gray-300 p-2">Quantity</th>
-                                    <th className="border border-gray-300 p-2">Status</th>
-                                    <th className="border border-gray-300 p-2">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentOrders.map(order => (
-                                    <tr key={order._id}>
-                                        <td className="border border-gray-300 p-2">{order.product?.name || ''}</td>
-                                        <td className="border border-gray-300 p-2">{order.customerName}</td>
-                                        <td className="border border-gray-300 p-2">{order.quantity}</td>
-                                        <td className="border border-gray-300 p-2">{order.status}</td>
-                                        <td className="border border-gray-300 p-2">{order.orderDate ? new Date(order.orderDate).toLocaleDateString() : ''}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </>
+                    ))}
+                </div>
             )}
         </div>
     );

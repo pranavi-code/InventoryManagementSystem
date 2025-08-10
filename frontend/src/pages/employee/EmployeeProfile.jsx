@@ -48,20 +48,35 @@ const EmployeeProfile = () => {
 
     const fetchOrderStats = async () => {
         try {
-            const response = await API.get('/order/stats');
-            const stats = response.data.stats || [];
+            // Get all orders for the current user
+            const response = await API.get('/order');
+            const orders = response.data.orders || [];
+            
+            // Filter orders for current user (assuming orders have user field)
+            const userOrders = orders.filter(order => 
+                order.user === (user?.id || user?._id) || 
+                order.userId === (user?.id || user?._id)
+            );
             
             const statsObj = {
-                total: stats.reduce((sum, stat) => sum + stat.count, 0),
-                pending: stats.find(s => s._id === 'Pending')?.count || 0,
-                approved: stats.find(s => s._id === 'Approved')?.count || 0,
-                delivered: stats.find(s => s._id === 'Delivered')?.count || 0,
-                totalSpent: stats.reduce((sum, stat) => sum + (stat.totalAmount || 0), 0)
+                total: userOrders.length,
+                pending: userOrders.filter(order => order.status === 'Pending').length,
+                approved: userOrders.filter(order => order.status === 'Approved').length,
+                delivered: userOrders.filter(order => order.status === 'Delivered').length,
+                totalSpent: userOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
             };
             
             setOrderStats(statsObj);
         } catch (error) {
             console.error('Error fetching order stats:', error);
+            // Set default values if API fails
+            setOrderStats({
+                total: 0,
+                pending: 0,
+                approved: 0,
+                delivered: 0,
+                totalSpent: 0
+            });
         }
     };
 

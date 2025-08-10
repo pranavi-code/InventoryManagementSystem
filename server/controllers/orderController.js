@@ -148,6 +148,26 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
+        if (status === 'Delivered') {
+            // Additional stock reduction when order is delivered (if not already reduced)
+            const order = await Order.findById(id);
+            if (order && order.status !== 'Approved') {
+                await Product.findByIdAndUpdate(
+                    order.product,
+                    { $inc: { quantity: -order.quantity } }
+                );
+                // Emit real-time stock update
+                const io = req.app.get('io');
+                if (io) {
+                    const updatedProduct = await Product.findById(order.product);
+                    io.emit('stock_update', {
+                        productId: updatedProduct._id,
+                        quantity: updatedProduct.quantity
+                    });
+                }
+            }
+        }
+
         if (status === 'Rejected' && rejectionReason) {
             updateData.rejectionReason = rejectionReason;
         }

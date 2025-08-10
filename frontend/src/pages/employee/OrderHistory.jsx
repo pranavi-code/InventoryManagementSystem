@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 import { getStatusIcon, getStatusColor } from '../../utils/orderUtils';
 import {
     FaCalendarAlt,
@@ -14,6 +15,7 @@ import {
 } from 'react-icons/fa';
 
 const OrderHistory = () => {
+    const { user } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('');
@@ -30,7 +32,19 @@ const OrderHistory = () => {
     const fetchOrders = async () => {
         try {
             const response = await API.get('/order');
-            setOrders(response.data.orders || []);
+            const allOrders = response.data.orders || [];
+            
+            // Filter orders for current user
+            if (user && (user.id || user._id)) {
+                const userOrders = allOrders.filter(order => {
+                    const orderUserId = order.user || order.userId || order.customerId;
+                    const currentUserId = user.id || user._id;
+                    return orderUserId === currentUserId;
+                });
+                setOrders(userOrders);
+            } else {
+                setOrders([]);
+            }
         } catch (error) {
             console.error('Error fetching orders:', error);
         } finally {
@@ -112,6 +126,10 @@ const OrderHistory = () => {
         };
     };
 
+    const handleCompletedCardClick = () => {
+        setStatusFilter('Delivered');
+    };
+
     const stats = getOrderStats();
     const filteredOrders = filterOrders();
 
@@ -142,7 +160,10 @@ const OrderHistory = () => {
                         <FaBox className="text-blue-500 text-2xl" />
                     </div>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div 
+                    className="bg-white rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={handleCompletedCardClick}
+                >
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-600">Completed</p>

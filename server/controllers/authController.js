@@ -2,6 +2,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+
 const login = async (req, res) => {
     try{
         const{email,password} = req.body;
@@ -13,6 +14,12 @@ const login = async (req, res) => {
         if(!isMatch){
             return res.status(400).json({message: "Invalid credentials"});
         }
+        
+        // Set user as active when they log in
+        user.isActive = true;
+        user.updatedAt = new Date();
+        await user.save();
+        
         const token = jwt.sign({id: user._id,role: user.role}, process.env.JWT_SECRET, {expiresIn: '1d'});
         return res.status(200).json({
             success:true,
@@ -22,7 +29,8 @@ const login = async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                isActive: user.isActive
             }
         })
     }
@@ -30,5 +38,28 @@ const login = async (req, res) => {
         console.error(error);
         return res.status(500).json({message: "Internal server error"});
     }
-} 
-export {login};
+}
+
+const logout = async (req, res) => {
+    try {
+        const userId = req.user.id; // From auth middleware
+        const user = await User.findById(userId);
+        
+        if (user) {
+            // Set user as inactive when they log out
+            user.isActive = false;
+            user.updatedAt = new Date();
+            await user.save();
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: "Logout successful"
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({message: "Internal server error"});
+    }
+}
+
+export {login, logout};

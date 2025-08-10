@@ -1,5 +1,8 @@
 import {createContext,useState,useContext, use} from 'react';
+import API from '../utils/api';
+
 const AuthContext = createContext();
+
 export const AuthProvider = ({children}) => {
     const [user,setUser] = useState(()=>{
         const storedUser = localStorage.getItem('pos-user');
@@ -12,10 +15,18 @@ export const AuthProvider = ({children}) => {
         localStorage.setItem("pos-token", token);
     };
     
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem("pos-user");
-        localStorage.removeItem("pos-token");
+    const logout = async () => {
+        try {
+            // Call backend logout API to set user as inactive
+            await API.post('/auth/logout');
+        } catch (error) {
+            console.error('Error during logout:', error);
+            // Continue with logout even if API call fails
+        } finally {
+            setUser(null);
+            localStorage.removeItem("pos-user");
+            localStorage.removeItem("pos-token");
+        }
     };
     
     return (
@@ -24,5 +35,6 @@ export const AuthProvider = ({children}) => {
         </AuthContext.Provider>
     );
 }
+
 export const useAuth = () => useContext(AuthContext);
 export default AuthProvider;

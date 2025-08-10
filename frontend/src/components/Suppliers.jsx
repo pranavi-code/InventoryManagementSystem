@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaTruck, FaTimes, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 
 const Suppliers = () => {
     const [formData, setFormData] = useState({
@@ -127,133 +128,219 @@ const Suppliers = () => {
         }
     };
 
-    // Handle modal close
     const closeModal = () => {
         setModalOpen(false);
         setEditSupplierId(null);
         setFormData({ name: "", email: "", number: "", address: "" });
     };
 
+    const filteredSuppliers = suppliers.filter(supplier =>
+        supplier.name.toLowerCase().includes(search.toLowerCase()) ||
+        supplier.email.toLowerCase().includes(search.toLowerCase()) ||
+        supplier.number.includes(search) ||
+        supplier.address.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const getRandomColor = (index) => {
+        const colors = [
+            'bg-gradient-to-r from-blue-500 to-blue-600',
+            'bg-gradient-to-r from-green-500 to-green-600',
+            'bg-gradient-to-r from-purple-500 to-purple-600',
+            'bg-gradient-to-r from-pink-500 to-pink-600',
+            'bg-gradient-to-r from-yellow-500 to-yellow-600',
+            'bg-gradient-to-r from-red-500 to-red-600',
+            'bg-gradient-to-r from-indigo-500 to-indigo-600',
+            'bg-gradient-to-r from-emerald-500 to-emerald-600'
+        ];
+        return colors[index % colors.length];
+    };
+
     return (
-        <div className='p-4'>
-            <h1 className='text-2xl font-bold mb-8'>Supplier Management</h1>
-            <div className='flex justify-between items-center mb-4'>
-                <input
-                    type="text"
-                    placeholder="Search Supplier"
-                    className="border p-2 rounded w-64"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
+        <div className="p-6 bg-gray-50 min-h-screen">
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Suppliers Management</h1>
+                <p className="text-gray-600">Manage your suppliers and vendor relationships</p>
+            </div>
+
+            {/* Search and Add Button */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1 relative">
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search suppliers..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                </div>
                 <button
-                    className='px-4 py-2 bg-blue-500 text-white rounded cursor-pointer'
-                    onClick={() => { setModalOpen(true); setEditSupplierId(null); setFormData({ name: "", email: "", number: "", address: "" }); }}
+                    onClick={() => setModalOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors duration-200"
                 >
+                    <FaPlus />
                     Add Supplier
                 </button>
             </div>
+
+            {/* Suppliers Grid */}
             {loading ? (
-                <div>Loading...</div>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-xl text-gray-600">Loading suppliers...</div>
+                </div>
             ) : (
-                <table className="w-full border-collapse border border-gray-300">
-                    <thead>
-                        <tr className="bg-gray-200">
-                            <th className="border border-gray-300 p-2">S No</th>
-                            <th className="border border-gray-300 p-2">Name</th>
-                            <th className="border border-gray-300 p-2">Email</th>
-                            <th className="border border-gray-300 p-2">Phone Number</th>
-                            <th className="border border-gray-300 p-2">Address</th>
-                            <th className="border border-gray-300 p-2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {suppliers
-                            .filter(sup => sup.name.toLowerCase().includes(search.toLowerCase()))
-                            .map((supplier, index) => (
-                                <tr key={supplier._id}>
-                                    <td className="border border-gray-300 p-2">{index + 1}</td>
-                                    <td className="border border-gray-300 p-2">{supplier.name}</td>
-                                    <td className="border border-gray-300 p-2">{supplier.email}</td>
-                                    <td className="border border-gray-300 p-2">{supplier.number}</td>
-                                    <td className="border border-gray-300 p-2">{supplier.address}</td>
-                                    <td className="border border-gray-300 p-2">
-                                        <button
-                                            className='px-2 py-1 bg-yellow-500 text-white rounded mr-2'
-                                            onClick={() => handleEdit(supplier)}
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            className='px-2 py-1 bg-red-500 text-white rounded'
-                                            onClick={() => handleDelete(supplier._id)}
-                                        >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                    </tbody>
-                </table>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredSuppliers.map((supplier, index) => (
+                        <div key={supplier._id} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className={`p-3 rounded-lg ${getRandomColor(index)}`}>
+                                    <FaTruck className="text-white text-xl" />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleEdit(supplier)}
+                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    >
+                                        <FaEdit />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(supplier._id)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <FaTrash />
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{supplier.name}</h3>
+                            
+                            <div className="space-y-3 mb-4">
+                                <div className="flex items-center gap-3 text-sm">
+                                    <FaEnvelope className="text-gray-400" />
+                                    <span className="text-gray-600">{supplier.email}</span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm">
+                                    <FaPhone className="text-gray-400" />
+                                    <span className="text-gray-600">{supplier.number}</span>
+                                </div>
+                                <div className="flex items-start gap-3 text-sm">
+                                    <FaMapMarkerAlt className="text-gray-400 mt-1" />
+                                    <span className="text-gray-600">{supplier.address}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="text-xs text-gray-500">
+                                ID: {supplier._id.slice(-8)}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             )}
 
-            {modalOpen && (
-                <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex justify-center items-center z-50'>
-                    <div className='bg-white p-6 rounded shadow-md w-full max-w-md relative'>
-                        <h2 className='text-xl font-bold mb-4'>{editSupplierId ? "Edit Supplier" : "Add Supplier"}</h2>
+            {/* Empty State */}
+            {!loading && filteredSuppliers.length === 0 && (
+                <div className="text-center py-12">
+                    <FaTruck className="text-6xl text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">No suppliers found</h3>
+                    <p className="text-gray-500 mb-4">
+                        {search ? 'Try adjusting your search terms' : 'Get started by adding your first supplier'}
+                    </p>
+                    {!search && (
                         <button
-                            className='absolute top-4 right-4 font-bold text-lg cursor-pointer'
-                            onClick={closeModal}
+                            onClick={() => setModalOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 mx-auto transition-colors duration-200"
                         >
-                            X
+                            <FaPlus />
+                            Add Supplier
                         </button>
-                        <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
-                            <input
-                                type='text'
-                                name='name'
-                                value={formData.name}
-                                onChange={handleChange}
-                                placeholder='Supplier Name'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <input
-                                type='email'
-                                name='email'
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder='Supplier Email'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <input
-                                type='text'
-                                name='number'
-                                value={formData.number}
-                                onChange={handleChange}
-                                placeholder='Supplier Phone Number'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <input
-                                type='text'
-                                name='address'
-                                value={formData.address}
-                                onChange={handleChange}
-                                placeholder='Supplier Address'
-                                className='border p-2 rounded'
-                                required
-                            />
-                            <div className="flex space-x-2">
+                    )}
+                </div>
+            )}
+
+            {/* Modal */}
+            {modalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {editSupplierId ? 'Edit Supplier' : 'Add New Supplier'}
+                            </h2>
+                            <button
+                                onClick={closeModal}
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Supplier Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter supplier name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Email
+                                </label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter email address"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Phone Number
+                                </label>
+                                <input
+                                    type="tel"
+                                    name="number"
+                                    value={formData.number}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter phone number"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Address
+                                </label>
+                                <textarea
+                                    name="address"
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    required
+                                    rows="3"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter address"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-4">
                                 <button
-                                    type='submit'
-                                    className='w-full rounded-md bg-green-500 text-white p-3 cursor-pointer hover:bg-green-600'
+                                    type="submit"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
                                 >
-                                    {editSupplierId ? "Save Changes" : "Add Supplier"}
+                                    {editSupplierId ? 'Update Supplier' : 'Add Supplier'}
                                 </button>
                                 <button
                                     type="button"
-                                    className='w-full rounded-md bg-gray-500 text-white p-3 cursor-pointer hover:bg-gray-600'
                                     onClick={closeModal}
+                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition-colors"
                                 >
                                     Cancel
                                 </button>

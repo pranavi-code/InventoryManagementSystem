@@ -1,3 +1,10 @@
+
+import dotenv from 'dotenv';
+dotenv.config({ override: true });
+
+console.log("DEBUG .env MONGO_URI:", process.env.MONGO_URI);
+
+
 import express from 'express';
 import cors from 'cors';
 import http from 'http';
