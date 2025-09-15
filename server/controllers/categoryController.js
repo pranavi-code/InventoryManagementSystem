@@ -1,4 +1,5 @@
 import Category from '../models/Category.js';
+import Product from '../models/Product.js';
 
 export const addCategory = async(req,res)=>{
     try{
@@ -57,8 +58,18 @@ export const deleteCategory = async(req,res)=>{
         if(!existingCategory){
             return res.status(404).json({error: 'Category not found'});
         }
+
+        // First delete all products associated with this category
+        const deletedProducts = await Product.deleteMany({ category: id });
+        console.log(`Deleted ${deletedProducts.deletedCount} products associated with category ${id}`);
+
+        // Then delete the category
         await Category.findByIdAndDelete(id);
-        return res.status(200).json({success: true, message: 'Category deleted successfully'});
+        
+        return res.status(200).json({
+            success: true, 
+            message: `Category deleted successfully. ${deletedProducts.deletedCount} associated products were also removed.`
+        });
     }catch(error){
         console.error('Error deleting category:', error);
         return res.status(500).json({success: false, message: 'Internal server error'});

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import API from '../utils/api';
 import { FaSearch, FaEdit, FaTrash, FaEye, FaClock, FaCheckCircle, FaTruck, FaBox, FaTimesCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 const statusColors = {
@@ -39,10 +39,9 @@ const Orders = () => {
     const fetchAll = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem('pos-token');
             const [orderRes, prodRes] = await Promise.all([
-                axios.get('http://localhost:3000/api/order', { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get('http://localhost:3000/api/product', { headers: { Authorization: `Bearer ${token}` } }),
+                API.get('/order'),
+                API.get('/product'),
             ]);
             setOrders(orderRes.data.orders || []);
             setProducts(prodRes.data.products || []);
@@ -68,32 +67,30 @@ const Orders = () => {
 
     const handleStatusSave = async (orderId) => {
         try {
-            const response = await axios.put(
-                `http://localhost:3000/api/order/${orderId}/status`,
-                { status: editStatus },
-                { headers: { Authorization: `Bearer ${localStorage.getItem('pos-token')}` } }
-            );
+            const response = await API.put(`/order/${orderId}/status`, { 
+                status: editStatus 
+            });
             if (response.data.success) {
                 setEditOrderId(null);
                 setEditStatus('');
                 fetchAll();
             }
         } catch (error) {
-            alert('Error updating status');
+            console.error('Error updating status:', error);
+            alert(error.response?.data?.error || 'Error updating status');
         }
     };
 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this order?")) {
             try {
-                const response = await axios.delete(`http://localhost:3000/api/order/${id}`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('pos-token')}` }
-                });
+                const response = await API.delete(`/order/${id}`);
                 if (response.data.success) {
                     fetchAll();
                 }
             } catch (error) {
-                alert('Error deleting order');
+                console.error('Error deleting order:', error);
+                alert(error.response?.data?.error || 'Error deleting order');
             }
         }
     };
@@ -115,84 +112,95 @@ const Orders = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-blue-50 p-6">
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-r from-blue-400 to-violet-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+            </div>
+
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Orders Management</h1>
-                <p className="text-gray-600">Track and manage all customer orders</p>
+            <div className="relative mb-8 animate-fadeInDown">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2 leading-relaxed pb-1">
+                        Orders Management
+                    </h1>
+                    <p className="text-gray-600 text-lg">Track and manage all customer orders</p>
+                </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+            <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-fadeInUp">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                            <p className="text-3xl font-bold text-gray-900">{filteredOrders.length}</p>
+                            <p className="text-sm font-semibold text-gray-600 mb-1">Total Orders</p>
+                            <p className="text-3xl font-bold text-gray-800">{filteredOrders.length}</p>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <FaBox className="text-blue-600 text-xl" />
+                        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaBox className="text-white text-2xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Pending</p>
+                            <p className="text-sm font-semibold text-gray-600 mb-1">Pending</p>
                             <p className="text-3xl font-bold text-yellow-600">
                                 {filteredOrders.filter(o => o.status === 'Pending').length}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <FaClock className="text-yellow-600 text-xl" />
+                        <div className="w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaClock className="text-white text-2xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Delivered</p>
+                            <p className="text-sm font-semibold text-gray-600 mb-1">Delivered</p>
                             <p className="text-3xl font-bold text-green-600">
                                 {filteredOrders.filter(o => o.status === 'Delivered').length}
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                            <FaCheckCircle className="text-green-600 text-xl" />
+                        <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaCheckCircle className="text-white text-2xl" />
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                            <p className="text-sm font-semibold text-gray-600 mb-1">Total Revenue</p>
                             <p className="text-3xl font-bold text-emerald-600">${getTotalAmount().toFixed(2)}</p>
                         </div>
-                        <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                            <FaCheckCircle className="text-emerald-600 text-xl" />
+                        <div className="w-16 h-16 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaCheckCircle className="text-white text-2xl" />
                         </div>
                     </div>
                 </div>
             </div>
 
             {/* Search and Filters */}
-            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            <div className="relative flex flex-col lg:flex-row gap-6 mb-8 animate-fadeInUp">
                 <div className="flex-1 relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <FaSearch className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl z-10" />
                     <input
                         type="text"
                         placeholder="Search by customer or product..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-16 pr-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400 shadow-lg"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg shadow-lg"
                 >
                     <option value="">All Status</option>
                     <option value="Pending">Pending</option>
@@ -207,67 +215,70 @@ const Orders = () => {
 
             {/* Orders Table */}
             {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-xl text-gray-600">Loading orders...</div>
+                <div className="relative flex items-center justify-center h-64 animate-fadeInUp">
+                    <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+                        <div className="text-2xl text-gray-600 font-semibold">Loading orders...</div>
+                    </div>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                <div className="relative bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/20 animate-fadeInUp">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200/50">
+                            <thead className="bg-gray-50/80 backdrop-blur-lg">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Order Details
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Customer
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Product & Quantity
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Amount
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Status
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Date
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredOrders.map((order) => (
-                                    <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                            <tbody className="bg-white/50 backdrop-blur-lg divide-y divide-gray-200/50">
+                                {filteredOrders.map((order, index) => (
+                                    <tr 
+                                        key={order._id} 
+                                        className="hover:bg-white/70 transition-all duration-300 hover:shadow-lg"
+                                        style={{ animationDelay: `${index * 50}ms` }}
+                                    >
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">
+                                            <div className="text-sm font-bold text-gray-900">
                                                 #{order._id.slice(-8)}
                                             </div>
-                                            <div className="text-sm text-gray-500">
+                                            <div className="text-sm text-gray-600 font-medium">
                                                 Priority: {order.priority || 'Medium'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">
+                                            <div className="text-sm font-bold text-gray-900">
                                                 {order.customerName}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                {order.customerEmail || 'No email'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">
+                                            <div className="text-sm font-bold text-gray-900">
                                                 {order.product?.name || 'Product not found'}
                                             </div>
-                                            <div className="text-sm text-gray-500">
+                                            <div className="text-sm text-gray-600">
                                                 Qty: {order.quantity} | Stock: {getProductStock(order.product)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-bold text-green-600">
+                                            <div className="text-lg font-bold text-emerald-600">
                                                 ${order.totalAmount?.toFixed(2) || '0.00'}
                                             </div>
                                         </td>
@@ -277,7 +288,7 @@ const Orders = () => {
                                                     <select
                                                         value={editStatus}
                                                         onChange={(e) => setEditStatus(e.target.value)}
-                                                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                                                        className="text-sm border-2 border-white/50 rounded-xl px-3 py-2 bg-white/80 backdrop-blur-lg focus:ring-2 focus:ring-rose-500/20"
                                                     >
                                                         <option value="Pending">Pending</option>
                                                         <option value="Approved">Approved</option>
@@ -289,47 +300,47 @@ const Orders = () => {
                                                     </select>
                                                     <button
                                                         onClick={() => handleStatusSave(order._id)}
-                                                        className="text-green-600 hover:text-green-800"
+                                                        className="text-emerald-600 hover:text-emerald-800 p-2 rounded-lg hover:bg-emerald-50 transition-all duration-200"
                                                     >
                                                         ✓
                                                     </button>
                                                     <button
                                                         onClick={() => setEditOrderId(null)}
-                                                        className="text-red-600 hover:text-red-800"
+                                                        className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-all duration-200"
                                                     >
                                                         ✕
                                                     </button>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center space-x-2">
-                                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
+                                                    <span className={`inline-flex items-center px-3 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-lg ${statusColors[order.status]}`}>
                                                         {getStatusIcon(order.status)}
-                                                        <span className="ml-1">{order.status}</span>
+                                                        <span className="ml-2">{order.status}</span>
                                                     </span>
                                                     <button
                                                         onClick={() => handleStatusEdit(order)}
-                                                        className="text-blue-600 hover:text-blue-800"
+                                                        className="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-all duration-200"
                                                     >
                                                         <FaEdit />
                                                     </button>
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                                             {new Date(order.orderDate).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div className="flex space-x-2">
                                                 <button
                                                     onClick={() => showOrderDetails(order)}
-                                                    className="text-blue-600 hover:text-blue-800 p-1"
+                                                    className="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-all duration-200 hover:scale-110"
                                                     title="View Details"
                                                 >
                                                     <FaEye />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(order._id)}
-                                                    className="text-red-600 hover:text-red-800 p-1"
+                                                    className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-all duration-200 hover:scale-110"
                                                     title="Delete Order"
                                                 >
                                                     <FaTrash />
@@ -342,9 +353,12 @@ const Orders = () => {
                         </table>
                     </div>
                     {filteredOrders.length === 0 && (
-                        <div className="text-center py-12">
-                            <FaBox className="mx-auto text-4xl text-gray-400 mb-4" />
-                            <p className="text-gray-600">No orders found</p>
+                        <div className="text-center py-16">
+                            <div className="w-24 h-24 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                <FaBox className="text-4xl text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-3">No orders found</h3>
+                            <p className="text-gray-600">Orders will appear here when customers place them</p>
                         </div>
                     )}
                 </div>
@@ -352,53 +366,57 @@ const Orders = () => {
 
             {/* Order Details Modal */}
             {showDetailsModal && selectedOrder && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900">Order Details</h2>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+                    <div className="bg-white/90 backdrop-blur-lg rounded-3xl p-8 w-full max-w-lg mx-4 shadow-2xl border border-white/20 animate-slideInUp">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                                Order Details
+                            </h2>
                             <button
                                 onClick={() => setShowDetailsModal(false)}
-                                className="text-gray-400 hover:text-gray-600"
+                                className="text-gray-400 hover:text-gray-600 p-3 rounded-xl hover:bg-gray-100/50 transition-all duration-200 hover:scale-110"
                             >
                                 ✕
                             </button>
                         </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Order ID</label>
-                                <p className="text-sm text-gray-900">#{selectedOrder._id.slice(-8)}</p>
+                        <div className="space-y-6">
+                            <div className="bg-gray-50/80 rounded-2xl p-4">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Order ID</label>
+                                <p className="text-lg font-mono text-gray-900">#{selectedOrder._id.slice(-8)}</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Customer</label>
-                                <p className="text-sm text-gray-900">{selectedOrder.customerName}</p>
+                            <div className="bg-gray-50/80 rounded-2xl p-4">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Customer</label>
+                                <p className="text-lg text-gray-900 font-semibold">{selectedOrder.customerName}</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Product</label>
-                                <p className="text-sm text-gray-900">{selectedOrder.product?.name || 'Product not found'}</p>
+                            <div className="bg-gray-50/80 rounded-2xl p-4">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Product</label>
+                                <p className="text-lg text-gray-900 font-semibold">{selectedOrder.product?.name || 'Product not found'}</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Quantity</label>
-                                <p className="text-sm text-gray-900">{selectedOrder.quantity}</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-gray-50/80 rounded-2xl p-4">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Quantity</label>
+                                    <p className="text-lg text-gray-900 font-semibold">{selectedOrder.quantity}</p>
+                                </div>
+                                <div className="bg-gray-50/80 rounded-2xl p-4">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Total Amount</label>
+                                    <p className="text-lg font-bold text-emerald-600">${selectedOrder.totalAmount?.toFixed(2) || '0.00'}</p>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Total Amount</label>
-                                <p className="text-sm font-bold text-green-600">${selectedOrder.totalAmount?.toFixed(2) || '0.00'}</p>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Status</label>
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusColors[selectedOrder.status]}`}>
+                            <div className="bg-gray-50/80 rounded-2xl p-4">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
+                                <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold border-2 ${statusColors[selectedOrder.status]}`}>
                                     {getStatusIcon(selectedOrder.status)}
-                                    <span className="ml-1">{selectedOrder.status}</span>
+                                    <span className="ml-2">{selectedOrder.status}</span>
                                 </span>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Order Date</label>
-                                <p className="text-sm text-gray-900">{new Date(selectedOrder.orderDate).toLocaleDateString()}</p>
+                            <div className="bg-gray-50/80 rounded-2xl p-4">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Order Date</label>
+                                <p className="text-lg text-gray-900 font-semibold">{new Date(selectedOrder.orderDate).toLocaleDateString()}</p>
                             </div>
                             {selectedOrder.notes && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Notes</label>
-                                    <p className="text-sm text-gray-900">{selectedOrder.notes}</p>
+                                <div className="bg-gray-50/80 rounded-2xl p-4">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Notes</label>
+                                    <p className="text-lg text-gray-900 leading-relaxed">{selectedOrder.notes}</p>
                                 </div>
                             )}
                         </div>

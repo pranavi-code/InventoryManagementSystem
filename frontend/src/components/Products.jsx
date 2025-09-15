@@ -163,11 +163,19 @@ const Products = () => {
     };
 
     const getCategoryName = (categoryId) => {
+        // Handle both populated objects and ID strings
+        if (typeof categoryId === 'object' && categoryId !== null) {
+            return categoryId.categoryName || 'Unknown';
+        }
         const category = categories.find(cat => cat._id === categoryId);
         return category ? category.categoryName : 'Unknown';
     };
 
     const getSupplierName = (supplierId) => {
+        // Handle both populated objects and ID strings
+        if (typeof supplierId === 'object' && supplierId !== null) {
+            return supplierId.name || 'Unknown';
+        }
         const supplier = suppliers.find(sup => sup._id === supplierId);
         return supplier ? supplier.name : 'Unknown';
     };
@@ -182,7 +190,21 @@ const Products = () => {
         .filter(product => {
             const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase()) ||
                                 product.description?.toLowerCase().includes(search.toLowerCase());
-            const matchesCategory = !categoryFilter || product.category === categoryFilter;
+            const matchesCategory = !categoryFilter || 
+                                  (product.category?._id === categoryFilter) ||
+                                  (product.category === categoryFilter);
+            
+            // Debug logging for category filtering
+            if (categoryFilter) {
+                console.log('Category filter debug:', {
+                    categoryFilter,
+                    productName: product.name,
+                    productCategory: product.category,
+                    productCategoryId: product.category?._id,
+                    matchesCategory
+                });
+            }
+            
             return matchesSearch && matchesCategory;
         })
         .sort((a, b) => {
@@ -215,55 +237,78 @@ const Products = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Products Management</h1>
-                <p className="text-gray-600">Manage your product inventory and track stock levels</p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-10 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute top-0 right-10 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
             </div>
 
-            {/* Search, Filter, and Add Button */}
-            <div className="flex flex-col lg:flex-row gap-4 mb-6">
-                <div className="flex-1 relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+            <div className="relative z-10">
+                {/* Header */}
+                <div className="mb-8 animate-slide-down">
+                    <div className="backdrop-blur-xl bg-white/30 p-8 rounded-3xl border border-white/20 shadow-2xl">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent leading-relaxed pb-1">
+                                    Products Management ✨
+                                </h1>
+                                <p className="text-gray-600 mt-3 text-lg">Manage your product inventory and track stock levels in real-time</p>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                                    <FaBox className="text-2xl text-white" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex gap-3">
-                    <select
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="">All Categories</option>
-                        {categories.map(cat => (
-                            <option key={cat._id} value={cat._id}>{cat.categoryName}</option>
-                        ))}
-                    </select>
-                    <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="name">Sort by Name</option>
-                        <option value="price">Sort by Price</option>
-                        <option value="quantity">Sort by Quantity</option>
-                        <option value="category">Sort by Category</option>
-                    </select>
-                    <button
-                        onClick={() => setModalOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors duration-200"
-                    >
-                        <FaPlus />
-                        Add Product
-                    </button>
+
+                {/* Search, Filter, and Add Button */}
+                <div className="backdrop-blur-xl bg-white/30 p-6 rounded-3xl border border-white/20 shadow-2xl mb-8 animate-slide-up">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex-1 relative">
+                            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search products..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-12 pr-4 py-4 bg-white/50 backdrop-blur-sm border border-white/30 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 placeholder-gray-500"
+                            />
+                        </div>
+                        <div className="flex gap-3">
+                            <select
+                                value={categoryFilter}
+                                onChange={(e) => setCategoryFilter(e.target.value)}
+                                className="px-6 py-4 bg-white/50 backdrop-blur-sm border border-white/30 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                            >
+                                <option value="">All Categories</option>
+                                {categories.map(cat => (
+                                    <option key={cat._id} value={cat._id}>{cat.categoryName}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="px-6 py-4 bg-white/50 backdrop-blur-sm border border-white/30 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                            >
+                                <option value="name">Sort by Name</option>
+                                <option value="price">Sort by Price</option>
+                                <option value="quantity">Sort by Quantity</option>
+                                <option value="category">Sort by Category</option>
+                            </select>
+                            <button
+                                onClick={() => setModalOpen(true)}
+                                className="group bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-3"
+                            >
+                                <FaPlus className="group-hover:rotate-90 transition-transform duration-300" />
+                                Add Product
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
             {/* Products Grid */}
             {loading ? (
@@ -351,22 +396,22 @@ const Products = () => {
 
             {/* Modal */}
             {modalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-2xl font-bold text-gray-900">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+                    <div className="bg-white/90 backdrop-blur-lg rounded-3xl p-8 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20 animate-slideInUp">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                                 {editProductId ? 'Edit Product' : 'Add New Product'}
                             </h2>
                             <button
                                 onClick={closeModal}
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                                className="p-3 text-gray-400 hover:text-gray-600 rounded-xl hover:bg-gray-100/50 transition-all duration-200 hover:scale-110"
                             >
-                                <FaTimes />
+                                <FaTimes className="text-xl" />
                             </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
                                     Product Name *
                                 </label>
                                 <input
@@ -375,12 +420,12 @@ const Products = () => {
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400"
                                     placeholder="Enter product name"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
                                     Category *
                                 </label>
                                 <select
@@ -388,7 +433,7 @@ const Products = () => {
                                     value={formData.category}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg"
                                 >
                                     <option value="">Select Category</option>
                                     {categories.map(cat => (
@@ -397,7 +442,7 @@ const Products = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
                                     Supplier *
                                 </label>
                                 <select
@@ -405,7 +450,7 @@ const Products = () => {
                                     value={formData.supplier}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg"
                                 >
                                     <option value="">Select Supplier</option>
                                     {suppliers.map(sup => (
@@ -415,7 +460,7 @@ const Products = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                                         Price *
                                     </label>
                                     <input
@@ -426,12 +471,12 @@ const Products = () => {
                                         required
                                         min="0"
                                         step="0.01"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400"
                                         placeholder="0.00"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
                                         Quantity *
                                     </label>
                                     <input
@@ -441,35 +486,35 @@ const Products = () => {
                                         onChange={handleChange}
                                         required
                                         min="0"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400"
                                         placeholder="0"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">
                                     Description
                                 </label>
                                 <textarea
                                     name="description"
                                     value={formData.description}
                                     onChange={handleChange}
-                                    rows="3"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    rows="4"
+                                    className="w-full px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400 resize-none"
                                     placeholder="Enter product description"
                                 />
                             </div>
-                            <div className="flex gap-3 pt-4">
+                            <div className="flex gap-4 pt-6">
                                 <button
                                     type="submit"
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
+                                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-4 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                                 >
                                     {editProductId ? 'Update Product' : 'Add Product'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={closeModal}
-                                    className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition-colors"
+                                    className="flex-1 bg-gray-200/80 backdrop-blur-lg hover:bg-gray-300/80 text-gray-800 py-4 rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                                 >
                                     Cancel
                                 </button>
@@ -478,6 +523,60 @@ const Products = () => {
                     </div>
                 </div>
             )}
+            </div>
+
+            <style jsx>{`
+                @keyframes blob {
+                    0% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                    100% { transform: translate(0px, 0px) scale(1); }
+                }
+                
+                @keyframes slide-down {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                @keyframes slide-up {
+                    from {
+                        opacity: 0;
+                        transform: translateY(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                .animate-blob {
+                    animation: blob 7s infinite;
+                }
+                
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+                
+                .animation-delay-4000 {
+                    animation-delay: 4s;
+                }
+                
+                .animate-slide-down {
+                    animation: slide-down 0.6s ease-out forwards;
+                    opacity: 0;
+                }
+                
+                .animate-slide-up {
+                    animation: slide-up 0.6s ease-out forwards;
+                    opacity: 0;
+                }
+            `}</style>
         </div>
     );
 };

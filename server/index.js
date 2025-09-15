@@ -17,6 +17,8 @@ import productRoutes from './routes/product.js';
 import orderRoutes from './routes/order.js';
 import userRoutes from './routes/user.js';
 import notificationRoutes from './routes/notification.js';
+import salesRoutes from './routes/sales.js';
+import analyticsRoutes from './routes/analytics.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -31,18 +33,38 @@ const io = new SocketIOServer(server, {
 const userSocketMap = new Map();
 
 io.on('connection', (socket) => {
+    console.log('User connected:', socket.id);
+    
     // Listen for user identification
     socket.on('register', (userId) => {
         userSocketMap.set(userId, socket.id);
+        console.log(`User ${userId} registered with socket ${socket.id}`);
+    });
+
+    // Handle user going online
+    socket.on('user_online', (userId) => {
+        userSocketMap.set(userId, socket.id);
+        // Broadcast to all connected clients that this user is online
+        socket.broadcast.emit('user_online', userId);
+        console.log(`User ${userId} is online`);
     });
 
     socket.on('disconnect', () => {
-        // Remove user from map on disconnect
+        console.log('User disconnected:', socket.id);
+        // Find and remove user from map on disconnect
+        let disconnectedUserId = null;
         for (const [userId, sockId] of userSocketMap.entries()) {
             if (sockId === socket.id) {
                 userSocketMap.delete(userId);
+                disconnectedUserId = userId;
                 break;
             }
+        }
+        
+        // Broadcast to all connected clients that this user is offline
+        if (disconnectedUserId) {
+            socket.broadcast.emit('user_offline', disconnectedUserId);
+            console.log(`User ${disconnectedUserId} went offline`);
         }
     });
 });
@@ -60,6 +82,8 @@ app.use('/api/product', productRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/sales', salesRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

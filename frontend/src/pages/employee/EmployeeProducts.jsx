@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../../utils/api';
-import { FaSearch, FaShoppingCart, FaEye, FaFilter } from 'react-icons/fa';
+import { FaSearch, FaShoppingCart, FaEye, FaFilter, FaSpinner, FaBox, FaTags, FaDollarSign } from 'react-icons/fa';
 import { io } from 'socket.io-client';
 
 const EmployeeProducts = () => {
@@ -98,75 +98,125 @@ const EmployeeProducts = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="text-xl">Loading products...</div>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+                <div className="backdrop-blur-xl bg-white/30 p-8 rounded-3xl border border-white/20 shadow-2xl">
+                    <div className="flex flex-col items-center space-y-4">
+                        <FaSpinner className="text-4xl text-indigo-600 animate-spin" />
+                        <div className="text-xl font-semibold text-gray-700">Loading products...</div>
+                        <div className="text-sm text-gray-500">Fetching latest inventory data</div>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Products Catalog</h1>
-                <p className="text-gray-600 mt-2">Browse and order from available inventory</p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-10 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute top-0 right-10 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1">
-                        <div className="relative">
-                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search products..."
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
+            <div className="relative z-10">
+                {/* Header */}
+                <div className="mb-8 animate-slide-down">
+                    <div className="backdrop-blur-xl bg-white/30 p-8 rounded-3xl border border-white/20 shadow-2xl">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                                    Products Catalog ✨
+                                </h1>
+                                <p className="text-gray-600 mt-3 text-lg">Browse and order from our available inventory</p>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                                    <FaBox className="text-2xl text-white" />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="md:w-64">
-                        <select
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                        >
-                            <option value="">All Categories</option>
-                            {categories.map(category => (
-                                <option key={category._id} value={category._id}>
-                                    {category.categoryName}
-                                </option>
-                            ))}
-                        </select>
+                </div>
+
+                {/* Filters */}
+                <div className="backdrop-blur-xl bg-white/30 rounded-3xl border border-white/20 shadow-2xl p-6 mb-8 animate-slide-up">
+                    <div className="flex flex-col md:flex-row gap-6">
+                        <div className="flex-1">
+                            <div className="relative">
+                                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 text-lg z-10" />
+                                <input
+                                    type="text"
+                                    placeholder="Search products..."
+                                    className="w-full pl-12 pr-4 py-3 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400 shadow-lg"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="md:w-64">
+                            <div className="relative">
+                                <FaFilter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 text-lg z-10" />
+                                <select
+                                    className="w-full pl-12 pr-4 py-3 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg shadow-lg appearance-none"
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                >
+                                    <option value="">All Categories</option>
+                                    {categories.map(category => (
+                                        <option key={category._id} value={category._id}>
+                                            {category.categoryName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => {
-                    const stockStatus = getStockStatus(product.quantity);
-                    return (
-                        <div key={product._id} className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="p-6">
-                                <div className="flex justify-between items-start mb-3">
-                                    <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">{product.name}</h3>
-                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${stockStatus.color}`}>
+                {/* Products Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-slide-up">
+                    {filteredProducts.map((product, index) => {
+                        const stockStatus = getStockStatus(product.quantity);
+                        return (
+                            <div 
+                                key={product._id} 
+                                className="group backdrop-blur-xl bg-white/30 border border-white/20 rounded-3xl p-6 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105"
+                                style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+                                        <FaBox className="text-white text-lg" />
+                                    </div>
+                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${stockStatus.color} shadow-md`}>
                                         {stockStatus.text}
                                     </span>
                                 </div>
                                 
-                                <p className="text-sm text-gray-600 mb-2">{product.category?.categoryName}</p>
-                                <p className="text-sm text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+                                <h3 className="font-bold text-xl text-gray-800 mb-2 group-hover:text-indigo-600 transition-colors duration-300 line-clamp-2">
+                                    {product.name}
+                                </h3>
                                 
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="text-2xl font-bold text-green-600">${product.price}</span>
-                                    <span className="text-sm text-gray-600">{product.quantity} available</span>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <FaTags className="text-indigo-400 text-sm" />
+                                    <p className="text-sm text-gray-600 font-medium">{product.category?.categoryName}</p>
+                                </div>
+                                
+                                <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+                                    {product.description}
+                                </p>
+                                
+                                <div className="flex justify-between items-center mb-6">
+                                    <div className="flex items-center gap-2">
+                                        <FaDollarSign className="text-green-500 text-sm" />
+                                        <span className="text-2xl font-bold text-green-600">{product.price}</span>
+                                    </div>
+                                    <span className="text-sm text-gray-500 bg-gray-100/50 px-2 py-1 rounded-lg">
+                                        {product.quantity} available
+                                    </span>
                                 </div>
 
-                                <div className="flex space-x-2">
+                                <div className="flex space-x-3">
                                     <button
                                         onClick={() => setSelectedProduct(product)}
                                         className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center justify-center"
@@ -179,131 +229,163 @@ const EmployeeProducts = () => {
                                             setSelectedProduct(product);
                                             setShowOrderModal(true);
                                         }}
+                                        className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white py-2 px-4 rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
                                         disabled={product.quantity === 0}
-                                        className="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
                                     >
-                                        <FaShoppingCart className="mr-1" />
+                                        <FaEye className="text-sm" />
+                                        View
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedProduct(product);
+                                            setShowOrderModal(true);
+                                        }}
+                                        disabled={product.quantity === 0}
+                                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-2 px-4 rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed"
+                                    >
+                                        <FaShoppingCart className="text-sm" />
                                         Order
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {filteredProducts.length === 0 && (
-                <div className="text-center py-12">
-                    <FaSearch className="mx-auto text-4xl text-gray-400 mb-4" />
-                    <p className="text-gray-600">No products found matching your criteria</p>
+                        );
+                    })}
                 </div>
-            )}
 
-            {/* Product Detail Modal */}
-            {selectedProduct && !showOrderModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full">
-                        <div className="p-6">
-                            <h3 className="text-xl font-semibold mb-4">{selectedProduct.name}</h3>
-                            <div className="space-y-3">
-                                <div>
-                                    <span className="font-medium">Category:</span>
-                                    <span className="ml-2">{selectedProduct.category?.categoryName}</span>
-                                </div>
-                                <div>
-                                    <span className="font-medium">Supplier:</span>
-                                    <span className="ml-2">{selectedProduct.supplier?.name}</span>
-                                </div>
-                                <div>
-                                    <span className="font-medium">Price:</span>
-                                    <span className="ml-2 text-green-600 font-semibold">${selectedProduct.price}</span>
-                                </div>
-                                <div>
-                                    <span className="font-medium">Available Stock:</span>
-                                    <span className="ml-2">{selectedProduct.quantity}</span>
-                                </div>
-                                <div>
-                                    <span className="font-medium">Description:</span>
-                                    <p className="mt-1 text-gray-600">{selectedProduct.description}</p>
-                                </div>
+                {/* Empty State */}
+                {filteredProducts.length === 0 && (
+                    <div className="text-center py-16 animate-fade-in">
+                        <div className="backdrop-blur-xl bg-white/30 rounded-3xl p-12 shadow-2xl border border-white/20 max-w-md mx-auto">
+                            <div className="w-24 h-24 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                <FaSearch className="text-4xl text-white" />
                             </div>
-                            <div className="flex justify-end space-x-3 mt-6">
-                                <button
-                                    onClick={() => setSelectedProduct(null)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                                >
-                                    Close
-                                </button>
-                                <button
-                                    onClick={() => setShowOrderModal(true)}
-                                    disabled={selectedProduct.quantity === 0}
-                                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                >
-                                    Order Now
-                                </button>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-3">No products found</h3>
+                            <p className="text-gray-600 leading-relaxed">
+                                No products match your current search criteria. Try adjusting your filters or search terms.
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+        
+        {/* Product Detail Modal */}
+        {selectedProduct && !showOrderModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="backdrop-blur-xl bg-white/90 rounded-3xl border border-white/20 shadow-2xl max-w-md w-full">
+                    <div className="p-8">
+                        <h3 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">
+                            {selectedProduct.name}
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                                <FaTags className="text-indigo-500" />
+                                <span className="font-medium text-gray-700">Category:</span>
+                                <span className="text-gray-600">{selectedProduct.category?.categoryName}</span>
                             </div>
+                            <div className="flex items-center gap-3">
+                                <FaBox className="text-purple-500" />
+                                <span className="font-medium text-gray-700">Supplier:</span>
+                                <span className="text-gray-600">{selectedProduct.supplier?.name}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <FaDollarSign className="text-green-500" />
+                                <span className="font-medium text-gray-700">Price:</span>
+                                <span className="text-green-600 font-bold text-lg">${selectedProduct.price}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <FaShoppingCart className="text-blue-500" />
+                                <span className="font-medium text-gray-700">Available Stock:</span>
+                                <span className="text-gray-600 font-semibold">{selectedProduct.quantity}</span>
+                            </div>
+                            <div>
+                                <span className="font-medium text-gray-700 flex items-center gap-2 mb-2">
+                                    <FaEye className="text-indigo-500" />
+                                    Description:
+                                </span>
+                                <p className="text-gray-600 leading-relaxed bg-gray-50/50 p-3 rounded-xl">
+                                    {selectedProduct.description}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex justify-end space-x-3 mt-8">
+                            <button
+                                onClick={() => setSelectedProduct(null)}
+                                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300 font-semibold"
+                            >
+                                Close
+                            </button>
+                            <button
+                                onClick={() => setShowOrderModal(true)}
+                                disabled={selectedProduct.quantity === 0}
+                                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed"
+                            >
+                                Order Now
+                            </button>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+        )}
 
-            {/* Order Modal */}
-            {showOrderModal && selectedProduct && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg max-w-md w-full">
-                        <div className="p-6">
-                            <h3 className="text-xl font-semibold mb-4">Place Order</h3>
-                            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                                <h4 className="font-medium">{selectedProduct.name}</h4>
-                                <p className="text-sm text-gray-600">Price: ${selectedProduct.price}</p>
-                                <p className="text-sm text-gray-600">Available: {selectedProduct.quantity}</p>
+        {/* Order Modal */}
+        {showOrderModal && selectedProduct && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="backdrop-blur-xl bg-white/90 rounded-3xl border border-white/20 shadow-2xl max-w-md w-full">
+                    <div className="p-8">
+                        <h3 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6">
+                            Place Order
+                        </h3>
+                        <div className="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100">
+                            <h4 className="font-bold text-lg text-gray-800">{selectedProduct.name}</h4>
+                            <div className="flex justify-between items-center mt-2">
+                                <span className="text-sm text-gray-600">Price: <span className="font-semibold text-green-600">${selectedProduct.price}</span></span>
+                                <span className="text-sm text-gray-600">Available: <span className="font-semibold">{selectedProduct.quantity}</span></span>
                             </div>
+                        </div>
                             
-                            <form onSubmit={handleOrderSubmit}>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max={selectedProduct.quantity}
-                                            value={orderForm.quantity}
-                                            onChange={(e) => setOrderForm({...orderForm, quantity: parseInt(e.target.value)})}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                                        <select
-                                            value={orderForm.priority}
-                                            onChange={(e) => setOrderForm({...orderForm, priority: e.target.value})}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        >
-                                            <option value="Low">Low</option>
-                                            <option value="Medium">Medium</option>
-                                            <option value="High">High</option>
-                                            <option value="Urgent">Urgent</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
-                                        <textarea
-                                            value={orderForm.notes}
-                                            onChange={(e) => setOrderForm({...orderForm, notes: e.target.value})}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                            rows="3"
-                                            placeholder="Any special instructions..."
-                                        />
-                                    </div>
-                                    <div className="bg-blue-50 p-3 rounded-lg">
-                                        <p className="text-sm text-blue-800">
-                                            <span className="font-medium">Total Amount: </span>
-                                            ${(selectedProduct.price * orderForm.quantity).toFixed(2)}
-                                        </p>
-                                    </div>
+                            <form onSubmit={handleOrderSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Quantity</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={selectedProduct.quantity}
+                                        value={orderForm.quantity}
+                                        onChange={(e) => setOrderForm({...orderForm, quantity: parseInt(e.target.value)})}
+                                        className="w-full border-2 border-white/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-green-500/20 focus:border-green-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg shadow-lg"
+                                        required
+                                    />
                                 </div>
-                                <div className="flex justify-end space-x-3 mt-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Priority</label>
+                                    <select
+                                        value={orderForm.priority}
+                                        onChange={(e) => setOrderForm({...orderForm, priority: e.target.value})}
+                                        className="w-full border-2 border-white/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-green-500/20 focus:border-green-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg shadow-lg appearance-none"
+                                    >
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Notes (Optional)</label>
+                                    <textarea
+                                        value={orderForm.notes}
+                                        onChange={(e) => setOrderForm({...orderForm, notes: e.target.value})}
+                                        className="w-full border-2 border-white/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-green-500/20 focus:border-green-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg shadow-lg resize-none"
+                                        rows="3"
+                                        placeholder="Any special instructions..."
+                                    />
+                                </div>
+                                <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl border border-green-100">
+                                    <p className="text-lg text-green-800">
+                                        <span className="font-semibold">Total Amount: </span>
+                                        <span className="font-bold">${(selectedProduct.price * orderForm.quantity).toFixed(2)}</span>
+                                    </p>
+                                </div>
+                                <div className="flex justify-end space-x-3 pt-4">
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -311,13 +393,13 @@ const EmployeeProducts = () => {
                                             setSelectedProduct(null);
                                             setOrderForm({ quantity: 1, priority: 'Medium', notes: '' });
                                         }}
-                                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                        className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300 font-semibold"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                                        className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold"
                                     >
                                         Place Order
                                     </button>

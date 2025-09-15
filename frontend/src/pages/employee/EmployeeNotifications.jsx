@@ -307,15 +307,30 @@ const EmployeeNotifications = () => {
     const getNotificationIcon = (type) => {
         switch (type) {
             case 'success':
-                return <FaCheckCircle className="text-green-500" />;
+                return <FaCheckCircle className="text-green-600 text-xl" />;
             case 'error':
-                return <FaTimesCircle className="text-red-500" />;
+                return <FaTimesCircle className="text-red-600 text-xl" />;
             case 'warning':
-                return <FaExclamationTriangle className="text-yellow-500" />;
+                return <FaExclamationTriangle className="text-yellow-600 text-xl" />;
             case 'info':
-                return <FaInfoCircle className="text-blue-500" />;
+                return <FaInfoCircle className="text-blue-600 text-xl" />;
             default:
-                return <FaBell className="text-gray-500" />;
+                return <FaBell className="text-gray-600 text-xl" />;
+        }
+    };
+
+    const getNotificationGradient = (type) => {
+        switch (type) {
+            case 'success':
+                return 'bg-gradient-to-br from-green-100 to-emerald-100';
+            case 'error':
+                return 'bg-gradient-to-br from-red-100 to-pink-100';
+            case 'warning':
+                return 'bg-gradient-to-br from-yellow-100 to-orange-100';
+            case 'info':
+                return 'bg-gradient-to-br from-blue-100 to-indigo-100';
+            default:
+                return 'bg-gradient-to-br from-gray-100 to-slate-100';
         }
     };
 
@@ -358,158 +373,185 @@ const EmployeeNotifications = () => {
     }
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            {/* Header */}
-            <div className="mb-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">My Notifications</h1>
-                        <p className="text-gray-600 mt-2">Stay updated with your order status and important alerts</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        {unreadCount > 0 && (
-                            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                {unreadCount} unread
-                            </span>
-                        )}
-                    </div>
-                </div>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-indigo-200/10 to-blue-200/10 rounded-full blur-3xl animate-pulse delay-500"></div>
             </div>
-
-            {/* Controls */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex items-center space-x-2">
-                            <FaFilter className="text-gray-400" />
-                            <select
-                                className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                value={filter}
-                                onChange={(e) => setFilter(e.target.value)}
-                            >
-                                <option value="all">All Notifications</option>
-                                <option value="unread">Unread Only</option>
-                                <option value="read">Read Only</option>
-                            </select>
-                        </div>
-
-                        <div className="flex items-center space-x-2">
-                            <input
-                                type="text"
-                                placeholder="Search notifications..."
-                                className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-
-                        <span className="text-sm text-gray-600 flex items-center">
-                            Showing {filteredNotifications.length} notifications
-                        </span>
-                    </div>
-
-                    <div className="flex space-x-2">
-                        {unreadCount > 0 && (
-                            <button
-                                onClick={markAllAsRead}
-                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
-                            >
-                                <FaMarkdown className="mr-2" />
-                                Mark All Read
-                            </button>
-                        )}
-                        {notifications.length > 0 && (
-                            <button
-                                onClick={clearAllNotifications}
-                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center"
-                            >
-                                <FaTrash className="mr-2" />
-                                Clear All
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Notifications List */}
-            <div className="space-y-4">
-                {filteredNotifications.map((notification) => (
-                    <div
-                        key={notification.id}
-                        className={`bg-white rounded-lg shadow-sm border-l-4 p-6 ${getNotificationColor(notification.type, notification.priority)} ${
-                            !notification.read ? 'ring-2 ring-blue-100' : ''
-                        }`}
-                    >
-                        <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4">
-                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                                    {getNotificationIcon(notification.type)}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                        <h3 className="font-semibold text-gray-900">{notification.title}</h3>
-                                        {!notification.read && (
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                        )}
-                                        {notification.priority && (
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                                notification.priority === 'high' ? 'bg-red-100 text-red-800' :
-                                                notification.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-blue-100 text-blue-800'
-                                            }`}>
-                                                {notification.priority.toUpperCase()}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <p className="text-gray-700 mb-2">{notification.message}</p>
-                                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                        <span>{notification.timestamp ? new Date(notification.timestamp).toLocaleString() : 'Just now'}</span>
-                                        {notification.orderId && (
-                                            <span>Order ID: #{notification.orderId.slice(-8)}</span>
-                                        )}
-                                    </div>
-                                </div>
+            
+            <div className="relative z-10 p-6">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="backdrop-blur-lg bg-white/70 rounded-3xl p-8 shadow-xl border border-white/20">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+                                    My Notifications
+                                </h1>
+                                <p className="text-gray-600 text-lg">Stay updated with your order status and important alerts</p>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                {!notification.read && (
-                                    <button
-                                        onClick={() => handleMarkAsRead(notification.id)}
-                                        className="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center"
-                                    >
-                                        <FaEnvelopeOpen className="mr-1" />
-                                        Mark as read
-                                    </button>
+                            <div className="flex items-center space-x-3">
+                                {unreadCount > 0 && (
+                                    <div className="relative">
+                                        <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg border border-white/20 backdrop-blur-sm">
+                                            {unreadCount} unread
+                                        </span>
+                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-ping"></div>
+                                    </div>
                                 )}
-                                <button
-                                    onClick={() => deleteNotification(notification.id)}
-                                    className="text-red-500 hover:text-red-700 p-1"
-                                >
-                                    <FaTrash className="text-sm" />
-                                </button>
+                                <div className="p-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl backdrop-blur-sm border border-white/30">
+                                    <FaBell className="text-2xl text-blue-600" />
+                                </div>
                             </div>
                         </div>
                     </div>
-                ))}
-            </div>
-
-            {filteredNotifications.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg">
-                    <FaBell className="mx-auto text-4xl text-gray-400 mb-4" />
-                    <p className="text-gray-600">No notifications found</p>
-                    <p className="text-sm text-gray-500">
-                        {filter === 'unread' ? 'All notifications have been read' : 
-                         filter === 'read' ? 'No read notifications' : 
-                         searchTerm ? 'No notifications match your search' :
-                         'You\'ll see notifications here when there are updates to your orders'}
-                    </p>
                 </div>
-            )}
 
-            {/* Auto-refresh indicator */}
-            <div className="mt-6 text-center">
-                <p className="text-xs text-gray-500">
-                    Notifications update in real-time via WebSocket connection
-                </p>
+                {/* Controls */}
+                <div className="backdrop-blur-lg bg-white/60 rounded-3xl p-8 shadow-xl border border-white/20 mb-8">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex items-center space-x-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl p-4 backdrop-blur-sm border border-white/30">
+                                <div className="p-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl">
+                                    <FaFilter className="text-blue-600" />
+                                </div>
+                                <select
+                                    className="bg-transparent border-0 outline-none text-gray-700 font-medium cursor-pointer"
+                                    value={filter}
+                                    onChange={(e) => setFilter(e.target.value)}
+                                >
+                                    <option value="all">All Notifications</option>
+                                    <option value="unread">Unread Only</option>
+                                    <option value="read">Read Only</option>
+                                </select>
+                            </div>
+
+                            <div className="flex items-center space-x-3 bg-gradient-to-r from-indigo-500/10 to-blue-500/10 rounded-2xl p-4 backdrop-blur-sm border border-white/30">
+                                <input
+                                    type="text"
+                                    placeholder="Search notifications..."
+                                    className="bg-transparent border-0 outline-none placeholder-gray-500 text-gray-700 w-48"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="flex items-center bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl px-4 py-3 backdrop-blur-sm border border-white/30">
+                                <span className="text-sm text-gray-600 font-medium">
+                                    Showing {filteredNotifications.length} notifications
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="flex space-x-3">
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={markAllAsRead}
+                                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 flex items-center shadow-lg backdrop-blur-sm border border-white/20 font-medium"
+                                >
+                                    <FaMarkdown className="mr-2" />
+                                    Mark All Read
+                                </button>
+                            )}
+                            {notifications.length > 0 && (
+                                <button
+                                    onClick={clearAllNotifications}
+                                    className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-2xl hover:from-red-600 hover:to-pink-700 transition-all duration-300 flex items-center shadow-lg backdrop-blur-sm border border-white/20 font-medium"
+                                >
+                                    <FaTrash className="mr-2" />
+                                    Clear All
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Notifications List */}
+                <div className="space-y-6">
+                    {filteredNotifications.map((notification) => (
+                        <div
+                            key={notification.id}
+                            className={`backdrop-blur-lg bg-white/60 rounded-3xl p-6 shadow-xl border border-white/20 transition-all duration-300 hover:shadow-2xl hover:bg-white/70 ${
+                                !notification.read ? 'ring-2 ring-blue-300/50 bg-gradient-to-r from-blue-50/30 to-indigo-50/30' : ''
+                            }`}
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-start space-x-4">
+                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg backdrop-blur-sm border border-white/30 ${getNotificationGradient(notification.type)}`}>
+                                        {getNotificationIcon(notification.type)}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center space-x-3 mb-2">
+                                            <h3 className="font-bold text-gray-900 text-lg">{notification.title}</h3>
+                                            {!notification.read && (
+                                                <div className="relative">
+                                                    <span className="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-lg"></span>
+                                                    <span className="absolute inset-0 w-3 h-3 bg-blue-400 rounded-full animate-ping"></span>
+                                                </div>
+                                            )}
+                                            {notification.priority && (
+                                                <span className={`px-3 py-1 text-xs font-bold rounded-full shadow-sm backdrop-blur-sm border border-white/30 ${
+                                                    notification.priority === 'high' ? 'bg-gradient-to-r from-red-100 to-pink-100 text-red-800' :
+                                                    notification.priority === 'medium' ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800' :
+                                                    'bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800'
+                                                }`}>
+                                                    {notification.priority.toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-gray-700 mb-3 leading-relaxed">{notification.message}</p>
+                                        <div className="flex items-center space-x-6 text-sm text-gray-500">
+                                            <div className="flex items-center space-x-2">
+                                                <FaClock className="text-gray-400" />
+                                                <span>{notification.timestamp ? new Date(notification.timestamp).toLocaleString() : 'Just now'}</span>
+                                            </div>
+                                            {notification.orderId && (
+                                                <div className="flex items-center space-x-2">
+                                                    <FaTruck className="text-gray-400" />
+                                                    <span>Order #{notification.orderId.slice(-8)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    {!notification.read && (
+                                        <button
+                                            onClick={() => handleMarkAsRead(notification.id)}
+                                            className="px-4 py-2 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-600 rounded-xl hover:from-blue-500/30 hover:to-indigo-500/30 transition-all duration-300 text-sm font-medium flex items-center backdrop-blur-sm border border-white/30"
+                                        >
+                                            <FaEnvelopeOpen className="mr-2" />
+                                            Mark as read
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => deleteNotification(notification.id)}
+                                        className="p-3 bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-600 rounded-xl hover:from-red-500/30 hover:to-pink-500/30 transition-all duration-300 backdrop-blur-sm border border-white/30"
+                                    >
+                                        <FaTrash className="text-sm" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {filteredNotifications.length === 0 && (
+                    <div className="backdrop-blur-lg bg-white/60 rounded-3xl p-12 shadow-xl border border-white/20 text-center">
+                        <div className="w-20 h-20 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm border border-white/30">
+                            <FaBell className="text-4xl text-gray-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-700 mb-3">No notifications found</h3>
+                        <p className="text-gray-600 leading-relaxed">
+                            {filter === 'unread' ? 'All notifications have been read' : 
+                             filter === 'read' ? 'No read notifications' : 
+                             searchTerm ? 'No notifications match your search' :
+                             'You\'ll see notifications here when there are updates to your orders'}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

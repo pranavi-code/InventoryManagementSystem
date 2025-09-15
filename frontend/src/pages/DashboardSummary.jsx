@@ -116,33 +116,118 @@ const DashboardSummary = () => {
     ];
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-                <p className="text-gray-600">Welcome back! Here's an overview of your inventory system.</p>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-10 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute top-0 right-10 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
             </div>
-            
-            {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-xl text-gray-600">Loading dashboard...</div>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {statCards.map((card, index) => (
-                        <div key={index} className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`p-3 rounded-lg ${card.color}`}>
-                                    <card.icon className="text-white text-xl" />
-                                </div>
-                                <div className={`text-2xl font-bold ${card.textColor}`}>
-                                    {card.value}
+
+            <div className="relative z-10">
+                <div className="mb-8 animate-slide-down">
+                    <div className="backdrop-blur-xl bg-white/30 p-8 rounded-3xl border border-white/20 shadow-2xl">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                                    Admin Dashboard ⚡
+                                </h1>
+                                <p className="text-gray-600 mt-3 text-lg">Welcome back! Here's an overview of your inventory system in real-time.</p>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                                    <FaChartLine className="text-2xl text-white" />
                                 </div>
                             </div>
-                            <h3 className="text-gray-700 font-semibold text-lg">{card.title}</h3>
                         </div>
-                    ))}
+                    </div>
                 </div>
-            )}
+                
+                {loading ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="backdrop-blur-xl bg-white/30 p-8 rounded-3xl border border-white/20 shadow-2xl">
+                            <div className="flex flex-col items-center space-y-4">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                                <div className="text-xl font-semibold text-gray-700">Loading dashboard...</div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {statCards.map((card, index) => (
+                            <div 
+                                key={index} 
+                                className="group backdrop-blur-xl bg-white/30 border border-white/20 rounded-3xl p-6 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 animate-slide-up"
+                                style={{ animationDelay: `${index * 100}ms` }}
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-4 rounded-2xl ${card.color} shadow-lg group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300`}>
+                                        <card.icon className="text-white text-2xl" />
+                                    </div>
+                                    <div className={`text-3xl font-bold ${card.textColor} group-hover:scale-110 transition-transform duration-300`}>
+                                        {card.value}
+                                    </div>
+                                </div>
+                                <h3 className="text-gray-700 font-bold text-lg group-hover:text-gray-800 transition-colors">{card.title}</h3>
+                                <div className="mt-2 h-1 bg-gradient-to-r from-transparent via-indigo-300 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <style jsx>{`
+                @keyframes blob {
+                    0% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                    100% { transform: translate(0px, 0px) scale(1); }
+                }
+                
+                @keyframes slide-down {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                @keyframes slide-up {
+                    from {
+                        opacity: 0;
+                        transform: translateY(30px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                .animate-blob {
+                    animation: blob 7s infinite;
+                }
+                
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+                
+                .animation-delay-4000 {
+                    animation-delay: 4s;
+                }
+                
+                .animate-slide-down {
+                    animation: slide-down 0.6s ease-out forwards;
+                    opacity: 0;
+                }
+                
+                .animate-slide-up {
+                    animation: slide-up 0.6s ease-out forwards;
+                    opacity: 0;
+                }
+            `}</style>
         </div>
     );
 };

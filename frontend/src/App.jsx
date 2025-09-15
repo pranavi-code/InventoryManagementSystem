@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import ProtectedRoutes from './utils/ProtectedRoutes';
@@ -8,7 +8,7 @@ import Categories from './components/Categoties';
 import Products from './components/Products';
 import Suppliers from './components/Suppliers';
 import Orders from './components/Orders';
-import Users from './components/Users';
+import Employees from './components/Employees';
 import Inventory from './components/Inventory';
 import Profile from './components/Profile';
 import SalesReport from './components/SalesReport';
@@ -21,7 +21,6 @@ import PlaceOrder from './pages/employee/PlaceOrder';
 import MyOrders from './pages/employee/MyOrders';
 import OrderHistory from './pages/employee/OrderHistory';
 import EmployeeProfile from './pages/employee/EmployeeProfile';
-import Landing from './pages/Landing';
 import './App.css';
 
 function App() {
@@ -29,7 +28,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           
           {/* Admin Dashboard Routes */}
           <Route
@@ -45,7 +44,7 @@ function App() {
             <Route path="products" element={<Products/>} />
             <Route path="suppliers" element={<Suppliers/>} />
             <Route path="orders" element={<Orders />} />
-            <Route path="users" element={<Users/>} />
+            <Route path="users" element={<Employees/>} />
             <Route path="inventory" element={<Inventory />} />
             <Route path="sales-report" element={<SalesReport />} />
             <Route path="profile" element={<Profile />} />

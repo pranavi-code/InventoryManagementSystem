@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import API from '../utils/api';
-import { FaExclamationTriangle, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaExclamationTriangle, FaCheckCircle, FaTimesCircle, FaSearch, FaBox, FaDollarSign, FaChartLine } from 'react-icons/fa';
 import { io } from 'socket.io-client';
 
 const Inventory = () => {
@@ -54,8 +54,8 @@ const Inventory = () => {
                 {
                     ...product,
                     quantity: newQuantity,
-                    category: product.category._id,
-                    supplier: product.supplier._id
+                    category: typeof product.category === 'object' ? product.category._id : product.category,
+                    supplier: typeof product.supplier === 'object' ? product.supplier._id : product.supplier
                 }
             );
             if (response.data.success) {
@@ -118,107 +118,170 @@ const Inventory = () => {
     const totalValue = products.reduce((sum, product) => sum + (product.price * product.quantity), 0);
 
     return (
-        <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Inventory Management</h1>
+        <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-blue-50 p-6">
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-r from-blue-400 to-violet-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+            </div>
+
+            {/* Header */}
+            <div className="relative mb-8 animate-fadeInDown">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2 leading-relaxed pb-1">
+                        Inventory Management
+                    </h1>
+                    <p className="text-gray-600 text-lg">Monitor and manage your product inventory in real-time</p>
+                </div>
+            </div>
 
             {/* Inventory Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <h3 className="text-lg font-semibold text-blue-800">Total Products</h3>
-                    <p className="text-2xl font-bold text-blue-900">{totalProducts}</p>
+            <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 animate-fadeInUp">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-600 mb-1">Total Products</h3>
+                            <p className="text-3xl font-bold text-gray-800">{totalProducts}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaBox className="text-white text-2xl" />
+                        </div>
+                    </div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4 text-center">
-                    <h3 className="text-lg font-semibold text-green-800">In Stock</h3>
-                    <p className="text-2xl font-bold text-green-900">{inStockCount}</p>
+                
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-600 mb-1">In Stock</h3>
+                            <p className="text-3xl font-bold text-green-600">{inStockCount}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaCheckCircle className="text-white text-2xl" />
+                        </div>
+                    </div>
                 </div>
-                <div className="bg-yellow-50 rounded-lg p-4 text-center">
-                    <h3 className="text-lg font-semibold text-yellow-800">Low Stock</h3>
-                    <p className="text-2xl font-bold text-yellow-900">{lowStockCount}</p>
+                
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-600 mb-1">Low Stock</h3>
+                            <p className="text-3xl font-bold text-yellow-600">{lowStockCount}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaExclamationTriangle className="text-white text-2xl" />
+                        </div>
+                    </div>
                 </div>
-                <div className="bg-red-50 rounded-lg p-4 text-center">
-                    <h3 className="text-lg font-semibold text-red-800">Out of Stock</h3>
-                    <p className="text-2xl font-bold text-red-900">{outOfStockCount}</p>
+                
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-600 mb-1">Out of Stock</h3>
+                            <p className="text-3xl font-bold text-red-600">{outOfStockCount}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaTimesCircle className="text-white text-2xl" />
+                        </div>
+                    </div>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4 text-center">
-                    <h3 className="text-lg font-semibold text-purple-800">Total Value</h3>
-                    <p className="text-2xl font-bold text-purple-900">${totalValue.toFixed(2)}</p>
+                
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border border-white/20 hover:shadow-3xl transition-all duration-500 hover:scale-105">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-600 mb-1">Total Value</h3>
+                            <p className="text-3xl font-bold text-purple-600">${totalValue.toFixed(2)}</p>
+                        </div>
+                        <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                            <FaDollarSign className="text-white text-2xl" />
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Filters and Search */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                <input
-                    type="text"
-                    placeholder="Search products..."
-                    className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-64"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-                <div className="flex gap-2">
-                    <select
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-4 py-2"
-                    >
-                        <option value="all">All Products</option>
-                        <option value="in-stock">In Stock</option>
-                        <option value="low-stock">Low Stock</option>
-                        <option value="out-of-stock">Out of Stock</option>
-                    </select>
+            <div className="relative flex flex-col md:flex-row justify-between items-center mb-8 gap-6 animate-fadeInUp">
+                <div className="flex-1 relative">
+                    <FaSearch className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl z-10" />
+                    <input
+                        type="text"
+                        placeholder="Search products..."
+                        className="w-full pl-16 pr-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-violet-500/20 focus:border-violet-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400 shadow-lg"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
                 </div>
+                <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    className="px-6 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-violet-500/20 focus:border-violet-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg shadow-lg"
+                >
+                    <option value="all">All Products</option>
+                    <option value="in-stock">In Stock</option>
+                    <option value="low-stock">Low Stock</option>
+                    <option value="out-of-stock">Out of Stock</option>
+                </select>
             </div>
 
             {/* Products Table */}
             {loading ? (
-                <div className="text-center py-8">Loading inventory...</div>
+                <div className="relative flex items-center justify-center h-64 animate-fadeInUp">
+                    <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+                        <div className="text-2xl text-gray-600 font-semibold">Loading inventory...</div>
+                    </div>
+                </div>
             ) : (
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="relative bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/20 animate-fadeInUp">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200/50">
+                            <thead className="bg-gray-50/80 backdrop-blur-lg">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Product
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Category
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Supplier
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Price
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Current Stock
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Value
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredProducts.map((product) => {
+                            <tbody className="bg-white/50 backdrop-blur-lg divide-y divide-gray-200/50">
+                                {filteredProducts.map((product, index) => {
                                     const stockInfo = getStockStatus(product.quantity);
                                     return (
-                                        <tr key={product._id} className="hover:bg-gray-50">
+                                        <tr 
+                                            key={product._id} 
+                                            className="hover:bg-white/70 transition-all duration-300 hover:shadow-lg"
+                                            style={{ animationDelay: `${index * 50}ms` }}
+                                        >
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                                <div className="text-sm text-gray-500">{product.description}</div>
+                                                <div className="text-sm font-bold text-gray-900">{product.name}</div>
+                                                <div className="text-sm text-gray-600">{product.description}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                                                 {product.category?.categoryName || 'N/A'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                                                 {product.supplier?.name || 'N/A'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-green-600">
                                                 ${product.price}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -232,16 +295,16 @@ const Inventory = () => {
                                                             updateStock(product._id, newQuantity);
                                                         }
                                                     }}
-                                                    className="w-20 px-2 py-1 border border-gray-300 rounded text-center"
+                                                    className="w-24 px-3 py-2 border-2 border-white/50 rounded-xl text-center font-bold text-gray-800 bg-white/80 backdrop-blur-lg focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all duration-300"
                                                 />
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockInfo.bgColor} ${stockInfo.color}`}>
-                                                    <span className="mr-1">{stockInfo.icon}</span>
+                                                <span className={`inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold border-2 backdrop-blur-lg ${stockInfo.bgColor} ${stockInfo.color}`}>
+                                                    <span className="mr-2">{stockInfo.icon}</span>
                                                     {stockInfo.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-lg font-bold text-purple-600">
                                                 ${(product.price * product.quantity).toFixed(2)}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -252,7 +315,7 @@ const Inventory = () => {
                                                             updateStock(product._id, parseInt(newQuantity));
                                                         }
                                                     }}
-                                                    className="text-blue-600 hover:text-blue-900 mr-3"
+                                                    className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                                                 >
                                                     Update Stock
                                                 </button>
@@ -264,8 +327,12 @@ const Inventory = () => {
                         </table>
                     </div>
                     {filteredProducts.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                            No products found matching your criteria
+                        <div className="text-center py-16">
+                            <div className="w-24 h-24 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                <FaBox className="text-4xl text-white" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-800 mb-3">No products found</h3>
+                            <p className="text-gray-600">No products found matching your criteria</p>
                         </div>
                     )}
                 </div>

@@ -48,25 +48,32 @@ const EmployeeProfile = () => {
 
     const fetchOrderStats = async () => {
         try {
-            // Get all orders for the current user
-            const response = await API.get('/order');
-            const orders = response.data.orders || [];
+            // Fetch orders directly and calculate stats from them for more reliable data
+            const ordersRes = await API.get('/order');
+            const userOrders = ordersRes.data.orders || [];
             
-            // Filter orders for current user (assuming orders have user field)
-            const userOrders = orders.filter(order => 
-                order.user === (user?.id || user?._id) || 
-                order.userId === (user?.id || user?._id)
-            );
+            console.log('Fetched orders for profile stats:', userOrders.length);
             
-            const statsObj = {
+            // Calculate stats directly from orders for reliable data
+            const processedStats = {
                 total: userOrders.length,
                 pending: userOrders.filter(order => order.status === 'Pending').length,
                 approved: userOrders.filter(order => order.status === 'Approved').length,
                 delivered: userOrders.filter(order => order.status === 'Delivered').length,
-                totalSpent: userOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0)
+                totalSpent: userOrders.reduce((total, order) => {
+                    // Only count delivered orders for total spent (actual money spent)
+                    if (order.status === 'Delivered') {
+                        const orderTotal = order.totalAmount || (order.product?.price * order.quantity) || 0;
+                        console.log('Adding order total:', orderTotal, 'for delivered order:', order._id?.slice(-8));
+                        return total + orderTotal;
+                    }
+                    return total;
+                }, 0)
             };
+
+            console.log('Calculated stats from orders:', processedStats);
             
-            setOrderStats(statsObj);
+            setOrderStats(processedStats);
         } catch (error) {
             console.error('Error fetching order stats:', error);
             // Set default values if API fails
@@ -153,101 +160,113 @@ const EmployeeProfile = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-                <p className="text-gray-600 mt-2">Manage your account information and preferences</p>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+            {/* Animated Background */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-4 -left-4 w-72 h-72 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute -top-4 -right-4 w-72 h-72 bg-gradient-to-r from-emerald-400 to-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gradient-to-r from-pink-400 to-orange-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Profile Information */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold text-gray-900">Profile Information</h2>
-                            {!isEditing && (
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
-                                >
-                                    <FaEdit className="mr-2" />
-                                    Edit Profile
-                                </button>
-                            )}
-                        </div>
+            <div className="relative z-10 p-6">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="bg-white/20 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 p-8">
+                        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                            My Profile
+                        </h1>
+                        <p className="text-gray-600 text-lg">Manage your account information and preferences with ease</p>
+                    </div>
+                </div>
 
-                        <form onSubmit={handleProfileUpdate}>
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Full Name
-                                    </label>
-                                    <div className="relative">
-                                        <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            value={profileForm.name}
-                                            onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
-                                            disabled={!isEditing}
-                                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                isEditing ? 'border-gray-300' : 'border-gray-200 bg-gray-50'
-                                            }`}
-                                            required
-                                        />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Profile Information */}
+                    <div className="lg:col-span-2">
+                        <div className="bg-white/20 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 p-8">
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Profile Information</h2>
+                                {!isEditing && (
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center space-x-2"
+                                    >
+                                        <FaEdit />
+                                        <span>Edit Profile</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            <form onSubmit={handleProfileUpdate}>
+                                <div className="space-y-8">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                            Full Name
+                                        </label>
+                                        <div className="relative">
+                                            <FaUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                value={profileForm.name}
+                                                onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                                                disabled={!isEditing}
+                                                className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg ${
+                                                    isEditing ? 'border-white/50 bg-white/80 backdrop-blur-lg' : 'border-white/30 bg-white/40 backdrop-blur-lg text-gray-700'
+                                                }`}
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Email Address
-                                    </label>
-                                    <div className="relative">
-                                        <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                        <input
-                                            type="email"
-                                            value={profileForm.email}
-                                            onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-                                            disabled={!isEditing}
-                                            className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                                isEditing ? 'border-gray-300' : 'border-gray-200 bg-gray-50'
-                                            }`}
-                                            required
-                                        />
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                            Email Address
+                                        </label>
+                                        <div className="relative">
+                                            <FaEnvelope className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                            <input
+                                                type="email"
+                                                value={profileForm.email}
+                                                onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                                                disabled={!isEditing}
+                                                className={`w-full pl-12 pr-4 py-4 border-2 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-lg ${
+                                                    isEditing ? 'border-white/50 bg-white/80 backdrop-blur-lg' : 'border-white/30 bg-white/40 backdrop-blur-lg text-gray-700'
+                                                }`}
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Role
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value="Employee"
-                                            disabled
-                                            className="w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
-                                        />
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                            Role
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value="Employee"
+                                                disabled
+                                                className="w-full px-4 py-4 border-2 border-white/30 bg-gradient-to-r from-blue-50/80 to-purple-50/80 backdrop-blur-lg rounded-2xl text-gray-700 font-semibold text-lg"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
 
-                                {isEditing && (
-                                    <div className="flex space-x-3">
-                                        <button
-                                            type="submit"
-                                            disabled={loading}
-                                            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center disabled:opacity-50"
-                                        >
-                                            <FaSave className="mr-2" />
-                                            {loading ? 'Saving...' : 'Save Changes'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={cancelEdit}
-                                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
-                                        >
-                                            <FaTimes className="mr-2" />
-                                            Cancel
+                                    {isEditing && (
+                                        <div className="flex space-x-4 pt-4">
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center space-x-2 disabled:opacity-50"
+                                            >
+                                                <FaSave />
+                                                <span>{loading ? 'Saving...' : 'Save Changes'}</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={cancelEdit}
+                                                className="px-8 py-4 border-2 border-white/50 text-gray-700 rounded-2xl hover:bg-white/20 transition-all duration-300 font-semibold backdrop-blur-lg flex items-center space-x-2"
+                                            >
+                                                <FaTimes />
+                                                <span>Cancel</span>
                                         </button>
                                     </div>
                                 )}
@@ -256,40 +275,40 @@ const EmployeeProfile = () => {
                     </div>
 
                     {/* Password Change Section */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mt-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold text-gray-900">Security</h2>
+                    <div className="bg-white/20 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 p-8 mt-8">
+                        <div className="flex justify-between items-center mb-8">
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">Security</h2>
                             {!showPasswordForm && (
                                 <button
                                     onClick={() => setShowPasswordForm(true)}
-                                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors flex items-center"
+                                    className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl hover:from-amber-600 hover:to-orange-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center space-x-2"
                                 >
-                                    <FaLock className="mr-2" />
-                                    Change Password
+                                    <FaLock />
+                                    <span>Change Password</span>
                                 </button>
                             )}
                         </div>
 
                         {showPasswordForm ? (
                             <form onSubmit={handlePasswordChange}>
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
                                             Current Password
                                         </label>
                                         <div className="relative">
-                                            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                            <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                             <input
                                                 type={showCurrentPassword ? "text" : "password"}
                                                 value={passwordForm.currentPassword}
                                                 onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
-                                                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full pl-12 pr-12 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg"
                                                 required
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-300"
                                             >
                                                 {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
                                             </button>
@@ -297,23 +316,23 @@ const EmployeeProfile = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
                                             New Password
                                         </label>
                                         <div className="relative">
-                                            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                            <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                             <input
                                                 type={showNewPassword ? "text" : "password"}
                                                 value={passwordForm.newPassword}
                                                 onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                                                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full pl-12 pr-12 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg"
                                                 required
                                                 minLength="6"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowNewPassword(!showNewPassword)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-300"
                                             >
                                                 {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                                             </button>
@@ -321,52 +340,52 @@ const EmployeeProfile = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
                                             Confirm New Password
                                         </label>
                                         <div className="relative">
-                                            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                            <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                             <input
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 value={passwordForm.confirmPassword}
                                                 onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                                                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="w-full pl-12 pr-12 py-4 border-2 border-white/50 rounded-2xl focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg"
                                                 required
                                                 minLength="6"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-300"
                                             >
                                                 {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="flex space-x-3">
+                                    <div className="flex space-x-4 pt-4">
                                         <button
                                             type="submit"
                                             disabled={loading}
-                                            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center disabled:opacity-50"
+                                            className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl flex items-center space-x-2 disabled:opacity-50"
                                         >
-                                            <FaSave className="mr-2" />
-                                            {loading ? 'Changing...' : 'Change Password'}
+                                            <FaSave />
+                                            <span>{loading ? 'Changing...' : 'Change Password'}</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={cancelPasswordChange}
-                                            className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
+                                            className="px-8 py-4 border-2 border-white/50 text-gray-700 rounded-2xl hover:bg-white/20 transition-all duration-300 font-semibold backdrop-blur-lg flex items-center space-x-2"
                                         >
-                                            <FaTimes className="mr-2" />
-                                            Cancel
+                                            <FaTimes />
+                                            <span>Cancel</span>
                                         </button>
                                     </div>
                                 </div>
                             </form>
                         ) : (
-                            <div className="text-gray-600">
-                                <p>Keep your account secure by using a strong password.</p>
+                            <div className="text-gray-600 bg-gradient-to-r from-gray-50/80 to-blue-50/80 p-6 rounded-2xl border border-gray-100">
+                                <p className="font-semibold">Keep your account secure by using a strong password.</p>
                                 <p className="text-sm mt-2">Last password change: Not available</p>
                             </div>
                         )}
@@ -374,24 +393,26 @@ const EmployeeProfile = () => {
                 </div>
 
                 {/* Stats Sidebar */}
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {/* Account Summary */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Summary</h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Member Since</span>
-                                <span className="font-medium">
-                                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                    <div className="bg-white/20 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 p-8">
+                        <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-6">Account Summary</h3>
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <span className="text-gray-700 font-semibold">Member Since</span>
+                                <span className="font-bold text-gray-900">
+                                    {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 
+                                     user?.joinedDate ? new Date(user.joinedDate).toLocaleDateString() : 
+                                     new Date().toLocaleDateString()}
                                 </span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">User ID</span>
-                                <span className="font-medium text-sm">#{user?.id?.slice(-8) || 'N/A'}</span>
+                            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <span className="text-gray-700 font-semibold">User ID</span>
+                                <span className="font-bold text-blue-600 text-sm">#{(user?.id || user?._id)?.slice(-8) || 'N/A'}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Status</span>
-                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <span className="text-gray-700 font-semibold">Status</span>
+                                <span className="px-3 py-1 rounded-full text-sm font-bold shadow-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white">
                                     Active
                                 </span>
                             </div>
@@ -399,52 +420,39 @@ const EmployeeProfile = () => {
                     </div>
 
                     {/* Order Statistics */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Statistics</h3>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Total Orders</span>
-                                <span className="font-bold text-blue-600">{orderStats.total}</span>
+                    <div className="bg-white/20 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 p-8">
+                        <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">Order Statistics</h3>
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <span className="text-gray-700 font-semibold">Total Orders</span>
+                                <span className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{orderStats.total}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Pending</span>
-                                <span className="font-medium text-yellow-600">{orderStats.pending}</span>
+                            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <span className="text-gray-700 font-semibold">Pending</span>
+                                <span className="font-bold text-xl bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">{orderStats.pending}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Approved</span>
-                                <span className="font-medium text-green-600">{orderStats.approved}</span>
+                            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <span className="text-gray-700 font-semibold">Approved</span>
+                                <span className="font-bold text-xl bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{orderStats.approved}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Delivered</span>
-                                <span className="font-medium text-green-600">{orderStats.delivered}</span>
+                            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                                <span className="text-gray-700 font-semibold">Delivered</span>
+                                <span className="font-bold text-xl bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{orderStats.delivered}</span>
                             </div>
-                            <hr className="my-3" />
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Total Spent</span>
-                                <span className="font-bold text-green-600">${orderStats.totalSpent.toFixed(2)}</span>
+                            <div className="bg-gradient-to-r from-green-50/80 to-emerald-50/80 rounded-2xl p-4 border border-green-100">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-green-700 font-bold">Total Spent</span>
+                                    <span className="font-bold text-xl bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">${orderStats.totalSpent.toFixed(2)}</span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                        <div className="space-y-3">
-                            <Link to="/employee/order-history" className="w-full text-left px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors block">
-                                View Order History
-                            </Link>
-                            <Link to="/employee/place-order" className="w-full text-left px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors block">
-                                Place New Order
-                            </Link>
-                            <Link to="/employee/products" className="w-full text-left px-4 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors block">
-                                Browse Products
-                            </Link>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        </div>
     );
+    // JSX structure is now balanced
 };
 
 export default EmployeeProfile;

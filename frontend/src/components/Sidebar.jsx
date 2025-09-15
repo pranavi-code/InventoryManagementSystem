@@ -32,7 +32,7 @@ const Sidebar = () => {
         { path: '/admin-dashboard/products', icon: FaTable, label: 'Products' },
         { path: '/admin-dashboard/suppliers', icon: FaTruck, label: 'Suppliers' },
         { path: '/admin-dashboard/orders', icon: FaShoppingCart, label: 'Orders' },
-        { path: '/admin-dashboard/users', icon: FaUsers, label: 'Users' },
+        { path: '/admin-dashboard/users', icon: FaUsers, label: 'Employees' },
         { path: '/admin-dashboard/inventory', icon: FaClipboardList, label: 'Inventory' },
         { path: '/admin-dashboard/sales-report', icon: FaChartLine, label: 'Sales Report' },
         { path: '/admin-dashboard/notifications', icon: FaBell, label: 'Notifications' },

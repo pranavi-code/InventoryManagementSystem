@@ -3,6 +3,23 @@ import Product from '../models/Product.js';
 export const addProduct = async (req, res) => {
     try {
         const { name, category, supplier, price, quantity, description } = req.body;
+        
+        // Validate required fields
+        if (!name || !category || !supplier || !price || !quantity) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'All fields are required: name, category, supplier, price, quantity' 
+            });
+        }
+
+        // Validate category is not empty
+        if (!category.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Category is required and cannot be empty' 
+            });
+        }
+
         const product = new Product({ name, category, supplier, price, quantity, description });
         await product.save();
         return res.json({ success: true, product });
@@ -26,6 +43,23 @@ export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, category, supplier, price, quantity, description } = req.body;
+        
+        // Validate required fields
+        if (!name || !category || !supplier || !price || !quantity) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'All fields are required: name, category, supplier, price, quantity' 
+            });
+        }
+
+        // Validate category is not empty
+        if (!category.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Category is required and cannot be empty' 
+            });
+        }
+
         const updated = await Product.findByIdAndUpdate(
             id,
             { name, category, supplier, price, quantity, description },

@@ -315,41 +315,54 @@ const AdminNotifications = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="text-xl">Loading notifications...</div>
+            <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 flex items-center justify-center">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+                    <div className="text-2xl text-gray-600 font-semibold">Loading notifications...</div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-50 p-6">
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-indigo-400 to-violet-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+                <div className="absolute top-40 left-40 w-80 h-80 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+            </div>
+
             {/* Header */}
-            <div className="mb-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Admin Notifications</h1>
-                        <p className="text-gray-600 mt-2">
-                            Monitor system alerts, order updates, and inventory status
-                        </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        {unreadCount > 0 && (
-                            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                {unreadCount} unread
-                            </span>
-                        )}
+            <div className="relative mb-8 animate-fadeInDown">
+                <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                                Admin Notifications
+                            </h1>
+                            <p className="text-gray-600 text-lg">
+                                Monitor system alerts, order updates, and inventory status
+                            </p>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            {unreadCount > 0 && (
+                                <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-2xl text-lg font-bold shadow-lg">
+                                    {unreadCount} unread
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Controls */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="flex items-center space-x-2">
-                            <FaFilter className="text-gray-400" />
+            <div className="relative bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 mb-8 animate-fadeInUp">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <div className="flex flex-col md:flex-row gap-6">
+                        <div className="flex items-center space-x-3">
+                            <FaFilter className="text-gray-500 text-xl" />
                             <select
-                                className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border-2 border-white/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-violet-500/20 focus:border-violet-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg"
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value)}
                             >
@@ -359,26 +372,26 @@ const AdminNotifications = () => {
                             </select>
                         </div>
 
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-3">
                             <input
                                 type="text"
                                 placeholder="Search notifications..."
-                                className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="border-2 border-white/50 rounded-2xl px-4 py-3 focus:ring-4 focus:ring-violet-500/20 focus:border-violet-500 bg-white/80 backdrop-blur-lg transition-all duration-300 text-lg placeholder-gray-400"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
 
-                        <span className="text-sm text-gray-600 flex items-center">
+                        <span className="text-lg text-gray-600 flex items-center font-medium">
                             Showing {filteredNotifications.length} notifications
                         </span>
                     </div>
 
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-3">
                         {unreadCount > 0 && (
                             <button
                                 onClick={markAllAsRead}
-                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center"
+                                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
                             >
                                 <FaMarkdown className="mr-2" />
                                 Mark All Read
@@ -387,7 +400,7 @@ const AdminNotifications = () => {
                         {notifications.length > 0 && (
                             <button
                                 onClick={clearAllNotifications}
-                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center"
+                                className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white rounded-2xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center"
                             >
                                 <FaTrash className="mr-2" />
                                 Clear All
@@ -398,22 +411,23 @@ const AdminNotifications = () => {
             </div>
 
             {/* Notifications List */}
-            <div className="space-y-4">
-                {filteredNotifications.map((notification) => (
+            <div className="relative space-y-6 animate-fadeInUp">
+                {filteredNotifications.map((notification, index) => (
                     <div
-                                key={notification._id}
-                        className={`bg-white rounded-lg shadow-sm border-l-4 p-6 ${getNotificationColor(notification.type, notification.priority)} ${
-                            !notification.isRead ? 'ring-2 ring-blue-100' : ''
+                        key={notification._id}
+                        className={`bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-6 transition-all duration-500 hover:scale-105 hover:shadow-3xl ${
+                            !notification.isRead ? 'ring-4 ring-violet-200/50' : ''
                         }`}
+                        style={{ animationDelay: `${index * 100}ms` }}
                     >
                         <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4">
-                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                            <div className="flex items-start space-x-6">
+                                <div className="w-16 h-16 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                                     {getNotificationIcon(notification.type)}
                                 </div>
                                 <div className="flex-1">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                        <h3 className="font-semibold text-gray-900">
+                                    <div className="flex items-center space-x-3 mb-3">
+                                        <h3 className="text-xl font-bold text-gray-800">
                                             {notification.type === 'low_stock' ? 'Low Stock Alert' :
                                              notification.type === 'out_of_stock' ? 'Out of Stock Alert' :
                                              notification.type === 'pending_orders' ? 'Pending Orders' :
@@ -421,72 +435,69 @@ const AdminNotifications = () => {
                                              'Notification'}
                                         </h3>
                                         {!notification.isRead && (
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                            <span className="w-3 h-3 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full shadow-lg"></span>
                                         )}
                                         {notification.priority && (
-                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                                notification.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-                                                notification.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                notification.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-blue-100 text-blue-800'
+                                            <span className={`px-3 py-1 text-sm font-bold rounded-xl backdrop-blur-lg border-2 ${
+                                                notification.priority === 'urgent' ? 'bg-red-100/80 text-red-800 border-red-200' :
+                                                notification.priority === 'high' ? 'bg-orange-100/80 text-orange-800 border-orange-200' :
+                                                notification.priority === 'medium' ? 'bg-yellow-100/80 text-yellow-800 border-yellow-200' :
+                                                'bg-blue-100/80 text-blue-800 border-blue-200'
                                             }`}>
                                                 {notification.priority.toUpperCase()}
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-gray-700 mb-2">{notification.message}</p>
-                                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                                        <span>{new Date(notification.createdAt).toLocaleString()}</span>
+                                    <p className="text-gray-700 mb-4 text-lg leading-relaxed">{notification.message}</p>
+                                    <div className="flex items-center space-x-6 text-sm text-gray-600 bg-gray-50/80 rounded-2xl p-3">
+                                        <span className="font-medium">{new Date(notification.createdAt).toLocaleString()}</span>
                                         {notification.productId && (
-                                            <span>Product ID: #{notification.productId.slice(-8)}</span>
+                                            <span className="font-medium">Product ID: #{notification.productId.slice(-8)}</span>
                                         )}
                                         {notification.orderCount && (
-                                            <span>{notification.orderCount} order(s)</span>
+                                            <span className="font-medium">{notification.orderCount} order(s)</span>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                    {!notification.isRead && (
-                                        <button
-                                            onClick={() => handleMarkAsRead(notification._id)}
-                                        className="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center"
-                                        >
-                                        <FaEnvelopeOpen className="mr-1" />
-                                            Mark as read
-                                        </button>
-                                    )}
+                            <div className="flex items-center space-x-3">
+                                {!notification.isRead && (
+                                    <button
+                                        onClick={() => handleMarkAsRead(notification._id)}
+                                        className="text-blue-600 hover:text-blue-800 font-semibold flex items-center px-4 py-2 bg-blue-50/80 rounded-xl transition-all duration-200 hover:scale-105"
+                                    >
+                                        <FaEnvelopeOpen className="mr-2" />
+                                        Mark as read
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => deleteNotification(notification._id)}
-                                    className="text-red-500 hover:text-red-700 p-1"
+                                    className="text-red-600 hover:text-red-800 p-3 bg-red-50/80 rounded-xl transition-all duration-200 hover:scale-110"
                                 >
-                                    <FaTrash className="text-sm" />
+                                    <FaTrash className="text-lg" />
                                 </button>
                             </div>
                         </div>
-                                </div>
+                    </div>
                 ))}
             </div>
 
             {filteredNotifications.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg">
-                    <FaBell className="mx-auto text-4xl text-gray-400 mb-4" />
-                    <p className="text-gray-600">No notifications found</p>
-                    <p className="text-sm text-gray-500">
-                        {filter === 'unread' ? 'All notifications have been read' : 
-                         filter === 'read' ? 'No read notifications' : 
-                         searchTerm ? 'No notifications match your search' :
-                         'You\'ll see notifications here when there are system alerts or updates'}
-                    </p>
+                <div className="relative text-center py-16 animate-fadeInUp">
+                    <div className="bg-white/80 backdrop-blur-lg rounded-3xl p-12 shadow-2xl border border-white/20 max-w-md mx-auto">
+                        <div className="w-24 h-24 bg-gradient-to-r from-violet-400 to-purple-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <FaBell className="text-4xl text-white" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-3">No notifications found</h3>
+                        <p className="text-gray-600 leading-relaxed">
+                            {filter === 'unread' ? 'All notifications have been read' : 
+                             filter === 'read' ? 'No read notifications' : 
+                             searchTerm ? 'No notifications match your search' :
+                             'You\'ll see notifications here when there are system alerts or updates'}
+                        </p>
+                    </div>
                 </div>
             )}
-
-            {/* Auto-refresh indicator */}
-            <div className="mt-6 text-center">
-                <p className="text-xs text-gray-500">
-                    Notifications update in real-time via WebSocket connection
-                </p>
-            </div>
         </div>
     );
 };

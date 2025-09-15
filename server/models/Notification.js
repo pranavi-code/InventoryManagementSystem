@@ -13,7 +13,17 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['order_placed', 'order_status_update', 'low_stock'],
+        enum: [
+            'order_placed', 
+            'order_status_update', 
+            'order_approved',
+            'order_rejected',
+            'order_processing',
+            'order_shipped',
+            'order_delivered',
+            'order_cancelled',
+            'low_stock'
+        ],
         required: true,
     },
     message: {

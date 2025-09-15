@@ -46,9 +46,18 @@ export const addOrder = async (req, res) => {
                 recipient: admin._id,
                 sender: customerId,
                 type: 'order_placed',
-                message: `New order placed by ${customer.name}.`,
+                message: `New order placed by ${customer.name} for ${productDetails.name} (Qty: ${quantity}).`,
             });
             await notification.save();
+            
+            // Send real-time notification to admin
+            const io = req.app.get('io');
+            const userSocketMap = req.app.get('userSocketMap');
+            const adminSocketId = userSocketMap?.get(String(admin._id));
+            if (io && adminSocketId) {
+                console.log('[Socket.IO] Sending new order notification to admin:', admin.name);
+                io.to(adminSocketId).emit('notification', notification);
+            }
         }
 
         // Populate product details for response
@@ -76,8 +85,16 @@ export const getOrders = async (req, res) => {
             .populate("customerId", "name email")
             .populate("approvedBy", "name")
             .sort({ orderDate: -1 });
+
+        // Ensure totalAmount is calculated for orders that might be missing it
+        const ordersWithTotalAmount = orders.map(order => {
+            if (!order.totalAmount && order.product && order.product.price) {
+                order.totalAmount = order.product.price * order.quantity;
+            }
+            return order;
+        });
             
-        return res.json({ success: true, orders });
+        return res.json({ success: true, orders: ordersWithTotalAmount });
     } catch (error) {
         console.error('Get orders error:', error);
         return res.status(500).json({ success: false, error: "Server error" });
@@ -120,56 +137,150 @@ export const updateOrderStatus = async (req, res) => {
         }
 
         const updateData = { status };
+        const order = await Order.findById(id).populate('customerId', 'name email').populate('product', 'name');
+        
+        if (!order) {
+            return res.status(404).json({ success: false, error: "Order not found" });
+        }
 
         if (status === 'Approved') {
             updateData.approvedBy = req.user.id;
             updateData.approvedDate = new Date();
             
             // Reduce product quantity when order is approved
-            const order = await Order.findById(id);
-            if (order) {
-                await Product.findByIdAndUpdate(
-                    order.product,
-                    { $inc: { quantity: -order.quantity } }
-                );
-                // Emit real-time stock update
-                const io = req.app.get('io');
-                if (io) {
-                    const updatedProduct = await Product.findById(order.product);
-                    console.log('[Socket.IO] Emitting stock_update:', {
-                        productId: updatedProduct._id,
-                        quantity: updatedProduct.quantity
-                    });
-                    io.emit('stock_update', {
-                        productId: updatedProduct._id,
-                        quantity: updatedProduct.quantity
-                    });
-                }
+            await Product.findByIdAndUpdate(
+                order.product._id,
+                { $inc: { quantity: -order.quantity } }
+            );
+            
+            // Emit real-time stock update
+            const io = req.app.get('io');
+            if (io) {
+                const updatedProduct = await Product.findById(order.product._id);
+                console.log('[Socket.IO] Emitting stock_update:', {
+                    productId: updatedProduct._id,
+                    quantity: updatedProduct.quantity
+                });
+                io.emit('stock_update', {
+                    productId: updatedProduct._id,
+                    quantity: updatedProduct.quantity
+                });
+            }
+            
+            // Send notification to employee about approval
+            const notification = new Notification({
+                recipient: order.customerId._id,
+                sender: req.user.id,
+                type: 'order_approved',
+                message: `Your order for ${order.product.name} (Qty: ${order.quantity}) has been approved! 🎉`
+            });
+            await notification.save();
+            
+            // Send real-time notification
+            const userSocketMap = req.app.get('userSocketMap');
+            const recipientSocketId = userSocketMap?.get(String(order.customerId._id));
+            if (io && recipientSocketId) {
+                io.to(recipientSocketId).emit('notification', notification);
+            }
+        }
+
+        if (status === 'Rejected') {
+            if (rejectionReason) {
+                updateData.rejectionReason = rejectionReason;
+            }
+            
+            // Send notification to employee about rejection
+            const notification = new Notification({
+                recipient: order.customerId._id,
+                sender: req.user.id,
+                type: 'order_rejected',
+                message: `Your order for ${order.product.name} (Qty: ${order.quantity}) has been rejected. ${rejectionReason ? 'Reason: ' + rejectionReason : ''}`
+            });
+            await notification.save();
+            
+            // Send real-time notification
+            const io = req.app.get('io');
+            const userSocketMap = req.app.get('userSocketMap');
+            const recipientSocketId = userSocketMap?.get(String(order.customerId._id));
+            if (io && recipientSocketId) {
+                io.to(recipientSocketId).emit('notification', notification);
+            }
+        }
+
+        if (status === 'Processing') {
+            // Send notification about processing
+            const notification = new Notification({
+                recipient: order.customerId._id,
+                sender: req.user.id,
+                type: 'order_processing',
+                message: `Your order for ${order.product.name} is now being processed! 📦`
+            });
+            await notification.save();
+            
+            // Send real-time notification
+            const io = req.app.get('io');
+            const userSocketMap = req.app.get('userSocketMap');
+            const recipientSocketId = userSocketMap?.get(String(order.customerId._id));
+            if (io && recipientSocketId) {
+                io.to(recipientSocketId).emit('notification', notification);
+            }
+        }
+
+        if (status === 'Shipped') {
+            // Send notification about shipping
+            const notification = new Notification({
+                recipient: order.customerId._id,
+                sender: req.user.id,
+                type: 'order_shipped',
+                message: `Your order for ${order.product.name} has been shipped! 🚚 ${estimatedDelivery ? 'Estimated delivery: ' + new Date(estimatedDelivery).toLocaleDateString() : ''}`
+            });
+            await notification.save();
+            
+            // Send real-time notification
+            const io = req.app.get('io');
+            const userSocketMap = req.app.get('userSocketMap');
+            const recipientSocketId = userSocketMap?.get(String(order.customerId._id));
+            if (io && recipientSocketId) {
+                io.to(recipientSocketId).emit('notification', notification);
             }
         }
 
         if (status === 'Delivered') {
-            // Additional stock reduction when order is delivered (if not already reduced)
-            const order = await Order.findById(id);
-            if (order && order.status !== 'Approved') {
-                await Product.findByIdAndUpdate(
-                    order.product,
-                    { $inc: { quantity: -order.quantity } }
-                );
-                // Emit real-time stock update
-                const io = req.app.get('io');
-                if (io) {
-                    const updatedProduct = await Product.findById(order.product);
-                    io.emit('stock_update', {
-                        productId: updatedProduct._id,
-                        quantity: updatedProduct.quantity
-                    });
-                }
+            // Send notification about delivery
+            const notification = new Notification({
+                recipient: order.customerId._id,
+                sender: req.user.id,
+                type: 'order_delivered',
+                message: `Your order for ${order.product.name} has been delivered successfully! ✅ Thank you for your business!`
+            });
+            await notification.save();
+            
+            // Send real-time notification
+            const io = req.app.get('io');
+            const userSocketMap = req.app.get('userSocketMap');
+            const recipientSocketId = userSocketMap?.get(String(order.customerId._id));
+            if (io && recipientSocketId) {
+                io.to(recipientSocketId).emit('notification', notification);
             }
         }
 
-        if (status === 'Rejected' && rejectionReason) {
-            updateData.rejectionReason = rejectionReason;
+        if (status === 'Cancelled') {
+            // Send notification about cancellation
+            const notification = new Notification({
+                recipient: order.customerId._id,
+                sender: req.user.id,
+                type: 'order_cancelled',
+                message: `Your order for ${order.product.name} has been cancelled. ${rejectionReason ? 'Reason: ' + rejectionReason : ''}`
+            });
+            await notification.save();
+            
+            // Send real-time notification
+            const io = req.app.get('io');
+            const userSocketMap = req.app.get('userSocketMap');
+            const recipientSocketId = userSocketMap?.get(String(order.customerId._id));
+            if (io && recipientSocketId) {
+                io.to(recipientSocketId).emit('notification', notification);
+            }
         }
 
         if (estimatedDelivery) {
@@ -180,10 +291,6 @@ export const updateOrderStatus = async (req, res) => {
             .populate("product", "name price")
             .populate("customerId", "name email")
             .populate("approvedBy", "name");
-
-        if (!updated) {
-            return res.status(404).json({ success: false, error: "Order not found" });
-        }
 
         return res.json({ success: true, order: updated });
     } catch (error) {
